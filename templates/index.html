@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NSE OI Spurts — Live Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        /* ================================================================
+           RESET & BASE
+           ================================================================ */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { height: 100%; overflow: hidden; }
+        body {
+            font-family: 'Google Sans', 'Roboto', Arial, sans-serif;
+            background: #f8f9fa;
+            color: #202124;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ================================================================
+           TOP BAR  (Google Sheets-style green)
+           ================================================================ */
+        .topbar {
+            background: linear-gradient(135deg, #188038 0%, #1e8e3e 50%, #34a853 100%);
+            color: #fff;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 2px 4px rgba(0,0,0,.15);
+            z-index: 100;
+            flex-shrink: 0;
+        }
+        .topbar-icon {
+            width: 36px; height: 36px;
+            background: rgba(255,255,255,.2);
+            border-radius: 4px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px;
+        }
+        .topbar-title {
+            font-size: 17px;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+            flex: 1;
+        }
+        .topbar-title small {
+            font-size: 11px;
+            font-weight: 300;
+            opacity: 0.85;
+            display: block;
+            margin-top: 1px;
+        }
+
+        /* ================================================================
+           TOOLBAR (action buttons)
+           ================================================================ */
+        .toolbar {
+            background: #fff;
+            border-bottom: 1px solid #dadce0;
+            padding: 6px 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+            flex-shrink: 0;
+        }
+        .toolbar-btn {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 6px 14px;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            background: #fff;
+            color: #3c4043;
+            font-size: 13px;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all .15s;
+            white-space: nowrap;
+        }
+        .toolbar-btn:hover { background: #f1f3f4; border-color: #bdc1c6; }
+        .toolbar-btn:active { background: #e8eaed; }
+        .toolbar-btn.primary {
+            background: #1a73e8;
+            color: #fff;
+            border-color: #1a73e8;
+        }
+        .toolbar-btn.primary:hover { background: #1765cc; }
+        .toolbar-sep { width: 1px; height: 24px; background: #dadce0; margin: 0 4px; }
+
+        /* Search box */
+        .search-box {
+            display: flex;
+            align-items: center;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            padding: 0 10px;
+            background: #f1f3f4;
+            transition: all .2s;
+            margin-left: auto;
+        }
+        .search-box:focus-within { background: #fff; border-color: #1a73e8; box-shadow: 0 0 0 2px rgba(26,115,232,.15); }
+        .search-box input {
+            border: none; outline: none; background: transparent;
+            padding: 6px 4px;
+            font-size: 13px;
+            font-family: inherit;
+            width: 200px;
+            color: #202124;
+        }
+        .search-box .icon { color: #5f6368; font-size: 16px; }
+
+        /* Auto-refresh controls */
+        .auto-refresh {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: #5f6368;
+        }
+        .auto-refresh select {
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            padding: 4px 6px;
+            font-size: 12px;
+            font-family: inherit;
+            background: #fff;
+            color: #3c4043;
+            cursor: pointer;
+        }
+        .toggle-switch {
+            position: relative;
+            width: 36px; height: 18px;
+            cursor: pointer;
+        }
+        .toggle-switch input { display: none; }
+        .toggle-slider {
+            position: absolute; inset: 0;
+            background: #dadce0;
+            border-radius: 9px;
+            transition: .2s;
+        }
+        .toggle-slider::before {
+            content: '';
+            position: absolute;
+            width: 14px; height: 14px;
+            left: 2px; top: 2px;
+            background: #fff;
+            border-radius: 50%;
+            transition: .2s;
+            box-shadow: 0 1px 2px rgba(0,0,0,.2);
+        }
+        .toggle-switch input:checked + .toggle-slider { background: #1a73e8; }
+        .toggle-switch input:checked + .toggle-slider::before { transform: translateX(18px); }
+
+        /* ================================================================
+           NOTIFICATION BANNER
+           ================================================================ */
+        .banner {
+            padding: 8px 16px;
+            font-size: 13px;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .banner.info { background: #e8f0fe; color: #1967d2; display: flex; }
+        .banner.warn { background: #fef7e0; color: #ea8600; display: flex; }
+        .banner.error { background: #fce8e6; color: #d93025; display: flex; }
+        .banner .close-banner {
+            margin-left: auto; cursor: pointer; background: none; border: none;
+            font-size: 18px; color: inherit; opacity: .6;
+        }
+        .banner .close-banner:hover { opacity: 1; }
+
+        /* ================================================================
+           SPREADSHEET AREA
+           ================================================================ */
+        .sheet-wrapper {
+            flex: 1;
+            overflow: auto;
+            position: relative;
+        }
+        .sheet-table {
+            border-collapse: collapse;
+            width: 100%;
+            min-width: 1100px;
+            font-size: 13px;
+        }
+
+        /* Header */
+        .sheet-table thead {
+            position: sticky; top: 0; z-index: 10;
+        }
+        .sheet-table th {
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-top: none;
+            padding: 8px 12px;
+            text-align: left;
+            font-weight: 500;
+            color: #5f6368;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            user-select: none;
+            white-space: nowrap;
+            position: relative;
+        }
+        .sheet-table th:hover { background: #e8eaed; }
+        .sheet-table th.sorted-asc::after { content: ' ▲'; font-size: 10px; color: #1a73e8; }
+        .sheet-table th.sorted-desc::after { content: ' ▼'; font-size: 10px; color: #1a73e8; }
+        .sheet-table th.row-num-header {
+            width: 44px; min-width: 44px; text-align: center;
+            cursor: default; background: #f0f0f0;
+        }
+
+        /* Cells */
+        .sheet-table td {
+            border: 1px solid #e8eaed;
+            padding: 7px 12px;
+            white-space: nowrap;
+            transition: background .1s;
+        }
+        .sheet-table td.row-num {
+            background: #f8f9fa;
+            text-align: center;
+            color: #80868b;
+            font-size: 12px;
+            border-right: 2px solid #dadce0;
+            width: 44px; min-width: 44px;
+        }
+
+        /* Row striping & hover */
+        .sheet-table tbody tr:nth-child(even) td:not(.row-num) { background: #fafbfc; }
+        .sheet-table tbody tr:hover td:not(.row-num) { background: #e8f0fe !important; }
+        .sheet-table tbody tr:hover td.row-num { background: #d2e3fc; }
+        .sheet-table tbody tr.selected td:not(.row-num) { background: #d2e3fc !important; }
+
+        /* Colour-coded values */
+        .val-pos { color: #137333; font-weight: 500; }
+        .val-neg { color: #c5221f; font-weight: 500; }
+        .val-zero { color: #5f6368; }
+        .symbol-cell {
+            font-weight: 600;
+            color: #1a73e8;
+            letter-spacing: 0.3px;
+        }
+
+        /* ================================================================
+           STATUS BAR (bottom)
+           ================================================================ */
+        .statusbar {
+            background: #f8f9fa;
+            border-top: 1px solid #dadce0;
+            padding: 5px 16px;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            font-size: 12px;
+            color: #5f6368;
+            flex-shrink: 0;
+        }
+        .statusbar .stat { display: flex; align-items: center; gap: 4px; }
+        .statusbar .stat b { color: #202124; }
+        .countdown { margin-left: auto; }
+        .live-dot {
+            width: 8px; height: 8px;
+            background: #34a853;
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulse 2s infinite;
+        }
+        .live-dot.sample { background: #ea8600; }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .4; }
+        }
+
+        /* ================================================================
+           LOADING OVERLAY
+           ================================================================ */
+        .loading-overlay {
+            position: fixed; inset: 0;
+            background: rgba(255,255,255,.7);
+            display: none; align-items: center; justify-content: center;
+            z-index: 1000;
+        }
+        .loading-overlay.active { display: flex; }
+        .spinner {
+            width: 40px; height: 40px;
+            border: 4px solid #e8eaed;
+            border-top-color: #1a73e8;
+            border-radius: 50%;
+            animation: spin .8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ================================================================
+           EMPTY STATE
+           ================================================================ */
+        .empty-state {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+            color: #80868b;
+            text-align: center;
+        }
+        .empty-state.active { display: flex; }
+        .empty-state .icon { font-size: 56px; margin-bottom: 16px; }
+        .empty-state h3 { color: #3c4043; margin-bottom: 8px; }
+        .empty-state p { max-width: 400px; line-height: 1.5; }
+
+        /* ================================================================
+           RESPONSIVE
+           ================================================================ */
+        @media (max-width: 768px) {
+            .toolbar { gap: 4px; }
+            .search-box input { width: 120px; }
+            .topbar-title { font-size: 14px; }
+        }
+
+        /* Tooltip */
+        [data-tooltip] { position: relative; }
+        [data-tooltip]:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            top: 100%; left: 50%;
+            transform: translateX(-50%);
+            background: #3c4043;
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            white-space: nowrap;
+            z-index: 200;
+            margin-top: 4px;
+        }
+        /* LIVE button */
+        .live-btn {
+            font-weight: 700;
+            letter-spacing: 1px;
+            font-size: 12px;
+            transition: all .2s;
+        }
+        .live-btn.active {
+            background: #d93025;
+            color: #fff;
+            border-color: #d93025;
+            animation: live-glow 2s ease-in-out infinite;
+        }
+        .live-btn.active:hover { background: #b71c1c; }
+        .live-indicator {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: #80868b;
+            display: inline-block;
+            margin-right: 2px;
+        }
+        .live-btn.active .live-indicator {
+            background: #fff;
+            animation: live-pulse 1s ease-in-out infinite;
+        }
+        @keyframes live-pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(1.3); }
+        }
+        @keyframes live-glow {
+            0%, 100% { box-shadow: 0 0 4px rgba(217, 48, 37, 0.3); }
+            50% { box-shadow: 0 0 12px rgba(217, 48, 37, 0.6); }
+        }
+
+    </style>
+</head>
+<body>
+
+<!-- ============================  TOP BAR  ============================ -->
+<div class="topbar">
+    <div class="topbar-icon">📊</div>
+    <div class="topbar-title">
+        NSE OI Spurts Dashboard
+        <small>Open Interest Spurts — Live Market Analysis</small>
+    </div>
+    <span id="lastUpdated" style="font-size:12px;opacity:.85;"></span>
+</div>
+
+<!-- ============================  TOOLBAR  ============================ -->
+<div class="toolbar">
+    <button class="toolbar-btn primary" onclick="refreshData()" data-tooltip="Fetch latest data from NSE">
+        🔄 Refresh Data
+    </button>
+
+    <!-- LIVE MODE BUTTON -->
+    <button class="toolbar-btn live-btn" id="liveBtn" onclick="toggleLive()" data-tooltip="Real-time updates every 2 seconds">
+        <span class="live-indicator" id="liveIndicator"></span>
+        <span id="liveBtnText">LIVE</span>
+    </button>
+
+    <div class="toolbar-sep"></div>
+    <button class="toolbar-btn" onclick="downloadCSV()" data-tooltip="Download as CSV file">
+        📥 CSV
+    </button>
+    <button class="toolbar-btn" onclick="copyToClipboard()" data-tooltip="Copy table to clipboard">
+        📋 Copy
+    </button>
+    <div class="toolbar-sep"></div>
+
+    <!-- Auto-refresh -->
+    <div class="auto-refresh">
+        <label class="toggle-switch" data-tooltip="Toggle auto-refresh">
+            <input type="checkbox" id="autoRefreshToggle" onchange="toggleAutoRefresh()">
+            <span class="toggle-slider"></span>
+        </label>
+        <span>Auto-refresh</span>
+        <select id="refreshInterval" onchange="updateInterval()">
+            <option value="60">1 min</option>
+            <option value="300" selected>5 min</option>
+            <option value="900">15 min</option>
+            <option value="1800">30 min</option>
+        </select>
+    </div>
+
+    <div class="toolbar-sep"></div>
+
+    <!-- Filter dropdown -->
+    <div class="auto-refresh">
+        <span>Show:</span>
+        <select id="oiFilter" onchange="applyFilters()">
+            <option value="all">All</option>
+            <option value="positive_oi">OI Increase ↑</option>
+            <option value="negative_oi">OI Decrease ↓</option>
+            <option value="high_oi">OI Change > 10%</option>
+            <option value="top20">Top 20 by % OI Change</option>
+        </select>
+    </div>
+
+    <!-- Search -->
+    <div class="search-box">
+        <span class="icon">🔍</span>
+        <input type="text" id="searchInput" placeholder="Search symbol..." oninput="applyFilters()">
+    </div>
+</div>
+
+<!-- ============================  BANNER  ============================ -->
+<div class="banner" id="banner">
+    <span id="bannerIcon">ℹ️</span>
+    <span id="bannerText"></span>
+    <button class="close-banner" onclick="closeBanner()">×</button>
+</div>
+
+<!-- ============================  SPREADSHEET  ============================ -->
+<div class="sheet-wrapper" id="sheetWrapper">
+    <table class="sheet-table" id="sheetTable">
+        <thead>
+            <tr>
+                <th class="row-num-header">#</th>
+                <th data-col="symbol" onclick="sortBy('symbol')">Symbol</th>
+                <th data-col="underlyingValue" onclick="sortBy('underlyingValue')">Price (₹)</th>
+                <th data-col="latestOI" onclick="sortBy('latestOI')">Latest OI</th>
+                <th data-col="prevOI" onclick="sortBy('prevOI')">Prev OI</th>
+                <th data-col="changeInOI" onclick="sortBy('changeInOI')">OI Change</th>
+                <th data-col="pChangeInOI" onclick="sortBy('pChangeInOI')">% OI Change</th>
+                <th data-col="volume" onclick="sortBy('volume')">Volume</th>
+                <th data-col="futValue" onclick="sortBy('futValue')">Fut Value (L)</th>
+                <th data-col="totalValue" onclick="sortBy('totalValue')">Total Value (L)</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+    </table>
+
+    <!-- Empty state -->
+    <div class="empty-state" id="emptyState">
+        <div class="icon">📭</div>
+        <h3>No Data Available</h3>
+        <p>Click <b>Refresh Data</b> to fetch the latest OI Spurts from NSE India. Data is available during market hours (9:15 AM – 3:30 PM IST).</p>
+    </div>
+</div>
+
+<!-- ============================  STATUS BAR  ============================ -->
+<div class="statusbar">
+    <div class="stat">
+        <span class="live-dot" id="liveDot"></span>
+        <span id="sourceLabel">—</span>
+    </div>
+    <div class="stat">Rows: <b id="rowCount">0</b></div>
+    <div class="stat">Avg OI Chg: <b id="avgOIChg">—</b></div>
+    <div class="stat">Top Gainer: <b id="topGainer">—</b></div>
+    <div class="countdown" id="countdown"></div>
+</div>
+
+<!-- ============================  LOADING  ============================ -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div style="text-align:center">
+        <div class="spinner"></div>
+        <p style="margin-top:12px;color:#5f6368;font-size:13px;">Fetching data from NSE...</p>
+    </div>
+</div>
+
+<!-- ============================  JAVASCRIPT  ============================ -->
+<script>
+// ── State ──────────────────────────────────────────────────────────────
+let allData = [];
+let filteredData = [];
+let sortCol = 'pChangeInOI';
+let sortDir = 'desc';
+let autoRefreshTimer = null;
+let countdownTimer = null;
+let countdownSec = 0;
+let selectedRow = -1;
+let isLiveMode = false;
+let liveIntervalTimer = null;
+let isRequestInFlight = false;
+
+// ── Init ───────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    refreshData();
+    // Keyboard nav
+    document.addEventListener('keydown', handleKey);
+});
+
+// ── Data fetching ──────────────────────────────────────────────────────
+async function refreshData(silent = false) {
+    if (isRequestInFlight) return;
+    isRequestInFlight = true;
+
+    if (!silent) {
+        showLoading(true);
+    }
+    try {
+        const url = isLiveMode ? '/api/refresh?live=true' : '/api/refresh';
+        const resp = await fetch(url);
+        const json = await resp.json();
+        if (json.data && json.data.length > 0) {
+            allData = json.data;
+        }
+        if (json.last_updated) {
+            document.getElementById('lastUpdated').textContent = '🕐 ' + json.last_updated;
+        }
+        // Source indicator
+        const dot = document.getElementById('liveDot');
+        const label = document.getElementById('sourceLabel');
+        if (isLiveMode) {
+            dot.className = 'live-dot';
+            label.innerHTML = '<span style="color:#d93025; font-weight:700;">⚡ LIVE (2s)</span>';
+        } else if (json.source === 'live') {
+            dot.className = 'live-dot';
+            label.textContent = 'Live';
+        } else {
+            dot.className = 'live-dot sample';
+            label.textContent = 'Sample Data';
+        }
+        // Banner
+        if (json.error && !isLiveMode) {
+            showBanner('warn', json.error);
+        } else if (!json.error) {
+            closeBanner();
+        }
+
+        applyFilters();
+        if (!isLiveMode) {
+            resetCountdown();
+        }
+    } catch (err) {
+        if (!silent) {
+            showBanner('error', 'Network error: ' + err.message);
+        }
+    } finally {
+        isRequestInFlight = false;
+        if (!silent) {
+            showLoading(false);
+        }
+    }
+}
+
+// ── Live Mode Toggle ───────────────────────────────────────────────────
+function toggleLive() {
+    isLiveMode = !isLiveMode;
+    const btn = document.getElementById('liveBtn');
+    const btnText = document.getElementById('liveBtnText');
+
+    if (isLiveMode) {
+        btn.classList.add('active');
+        btnText.textContent = 'LIVE ON';
+        showBanner('info', '⚡ Live market stream active. Updating automatically every 2 seconds.');
+        setTimeout(closeBanner, 4000);
+
+        // Fetch immediately in silent mode
+        refreshData(true);
+
+        // Start 2-second interval
+        if (liveIntervalTimer) clearInterval(liveIntervalTimer);
+        liveIntervalTimer = setInterval(() => {
+            if (isLiveMode) {
+                refreshData(true);
+            }
+        }, 2000);
+    } else {
+        btn.classList.remove('active');
+        btnText.textContent = 'LIVE';
+        if (liveIntervalTimer) {
+            clearInterval(liveIntervalTimer);
+            liveIntervalTimer = null;
+        }
+        const label = document.getElementById('sourceLabel');
+        label.textContent = 'Live';
+        showBanner('info', 'Live stream paused.');
+        setTimeout(closeBanner, 2500);
+        resetCountdown();
+    }
+}
+
+async function loadCached() {
+    try {
+        const resp = await fetch('/api/oi-spurts');
+        const json = await resp.json();
+        if (json.data && json.data.length > 0) {
+            allData = json.data;
+            applyFilters();
+        }
+    } catch (_) {}
+}
+
+// ── Filtering ──────────────────────────────────────────────────────────
+function applyFilters() {
+    const search = document.getElementById('searchInput').value.toUpperCase().trim();
+    const filter = document.getElementById('oiFilter').value;
+
+    filteredData = allData.filter(row => {
+        // Search
+        if (search && !row.symbol.toUpperCase().includes(search)) return false;
+
+        // Category filter
+        const oiUp = row.changeInOI > 0;
+
+        switch (filter) {
+            case 'positive_oi':     return oiUp;
+            case 'negative_oi':     return !oiUp;
+            case 'high_oi':         return row.pChangeInOI > 10;
+            default:                return true;
+        }
+    });
+
+    // Special: top 20 filter
+    if (filter === 'top20') {
+        filteredData.sort((a, b) => b.pChangeInOI - a.pChangeInOI);
+        filteredData = filteredData.slice(0, 20);
+    }
+
+    // Sort
+    doSort();
+}
+
+// ── Sorting ────────────────────────────────────────────────────────────
+function sortBy(col) {
+    if (sortCol === col) {
+        sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+        sortCol = col;
+        sortDir = col === 'symbol' ? 'asc' : 'desc';
+    }
+    doSort();
+}
+
+function doSort() {
+    filteredData.sort((a, b) => {
+        let va = a[sortCol], vb = b[sortCol];
+        if (typeof va === 'string') {
+            return sortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+        }
+        return sortDir === 'asc' ? va - vb : vb - va;
+    });
+    renderTable();
+}
+
+// ── Rendering ──────────────────────────────────────────────────────────
+function renderTable() {
+    const tbody = document.getElementById('tableBody');
+    const empty = document.getElementById('emptyState');
+
+    // Update header sort indicators
+    document.querySelectorAll('.sheet-table th').forEach(th => {
+        th.classList.remove('sorted-asc', 'sorted-desc');
+        if (th.dataset.col === sortCol) {
+            th.classList.add(sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc');
+        }
+    });
+
+    if (filteredData.length === 0) {
+        tbody.innerHTML = '';
+        empty.classList.add('active');
+        updateStats();
+        return;
+    }
+    empty.classList.remove('active');
+
+    const rows = filteredData.map((row, i) => {
+        const oiChgCls = valClass(row.changeInOI);
+        const pOiChgCls = valClass(row.pChangeInOI);
+
+        return `<tr onclick="selectRow(${i})" class="${i === selectedRow ? 'selected' : ''}">
+            <td class="row-num">${i + 1}</td>
+            <td class="symbol-cell">${esc(row.symbol)}</td>
+            <td>${fmt(row.underlyingValue)}</td>
+            <td>${fmtInt(row.latestOI)}</td>
+            <td>${fmtInt(row.prevOI)}</td>
+            <td class="${oiChgCls}">${sign(row.changeInOI)}${fmtInt(Math.abs(row.changeInOI))}</td>
+            <td class="${pOiChgCls}">${sign(row.pChangeInOI)}${fmt(Math.abs(row.pChangeInOI))}%</td>
+            <td>${fmtInt(row.volume)}</td>
+            <td>${fmt(row.futValue)}</td>
+            <td>${fmt(row.totalValue)}</td>
+        </tr>`;
+    });
+
+    tbody.innerHTML = rows.join('');
+    updateStats();
+}
+
+function valClass(v) {
+    if (v > 0) return 'val-pos';
+    if (v < 0) return 'val-neg';
+    return 'val-zero';
+}
+
+function sign(v) {
+    if (v > 0) return '+';
+    if (v < 0) return '-';
+    return '';
+}
+
+function fmt(v) {
+    if (v === undefined || v === null) return '—';
+    return Number(v).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function fmtInt(v) {
+    if (v === undefined || v === null) return '—';
+    return Number(v).toLocaleString('en-IN');
+}
+
+function esc(s) {
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+}
+
+function selectRow(i) {
+    selectedRow = i;
+    renderTable();
+}
+
+// ── Stats ──────────────────────────────────────────────────────────────
+function updateStats() {
+    document.getElementById('rowCount').textContent = filteredData.length;
+
+    if (filteredData.length === 0) {
+        document.getElementById('avgOIChg').textContent = '—';
+        document.getElementById('topGainer').textContent = '—';
+        return;
+    }
+
+    const avg = filteredData.reduce((s, r) => s + (r.pChangeInOI || 0), 0) / filteredData.length;
+    document.getElementById('avgOIChg').textContent = avg.toFixed(2) + '%';
+
+    const top = filteredData.reduce((best, r) => r.pChangeInOI > best.pChangeInOI ? r : best, filteredData[0]);
+    document.getElementById('topGainer').textContent = `${top.symbol} (${sign(top.pChangeInOI)}${Math.abs(top.pChangeInOI).toFixed(2)}%)`;
+}
+
+// ── Auto-refresh ───────────────────────────────────────────────────────
+function toggleAutoRefresh() {
+    const on = document.getElementById('autoRefreshToggle').checked;
+    if (on) {
+        startAutoRefresh();
+    } else {
+        stopAutoRefresh();
+    }
+}
+
+function updateInterval() {
+    if (document.getElementById('autoRefreshToggle').checked) {
+        stopAutoRefresh();
+        startAutoRefresh();
+    }
+}
+
+function startAutoRefresh() {
+    const sec = parseInt(document.getElementById('refreshInterval').value);
+    autoRefreshTimer = setInterval(() => refreshData(), sec * 1000);
+    countdownSec = sec;
+    countdownTimer = setInterval(() => {
+        countdownSec--;
+        if (countdownSec <= 0) countdownSec = parseInt(document.getElementById('refreshInterval').value);
+        document.getElementById('countdown').textContent = `Next refresh in ${formatCountdown(countdownSec)}`;
+    }, 1000);
+    document.getElementById('countdown').textContent = `Next refresh in ${formatCountdown(sec)}`;
+}
+
+function stopAutoRefresh() {
+    clearInterval(autoRefreshTimer);
+    clearInterval(countdownTimer);
+    autoRefreshTimer = null;
+    countdownTimer = null;
+    document.getElementById('countdown').textContent = '';
+}
+
+function resetCountdown() {
+    if (autoRefreshTimer) {
+        countdownSec = parseInt(document.getElementById('refreshInterval').value);
+    }
+}
+
+function formatCountdown(s) {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return m > 0 ? `${m}m ${sec}s` : `${sec}s`;
+}
+
+// ── CSV Download ───────────────────────────────────────────────────────
+function downloadCSV() {
+    if (filteredData.length === 0) return;
+
+    const headers = ['Symbol','Price','Latest OI','Prev OI','OI Change','% OI Change','Volume','Fut Value','Total Value'];
+    const keys = ['symbol','underlyingValue','latestOI','prevOI','changeInOI','pChangeInOI','volume','futValue','totalValue'];
+
+    let csv = headers.join(',') + '\n';
+    filteredData.forEach(row => {
+        csv += keys.map(k => {
+            const v = row[k];
+            return typeof v === 'string' ? `"${v}"` : v;
+        }).join(',') + '\n';
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `NSE_OI_Spurts_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showBanner('info', 'CSV downloaded successfully!');
+    setTimeout(closeBanner, 3000);
+}
+
+// ── Copy to Clipboard ──────────────────────────────────────────────────
+function copyToClipboard() {
+    if (filteredData.length === 0) return;
+
+    const headers = ['Symbol','Price','Latest OI','Prev OI','OI Change','% OI Change','Volume','Fut Value','Total Value'];
+    const keys = ['symbol','underlyingValue','latestOI','prevOI','changeInOI','pChangeInOI','volume','futValue','totalValue'];
+
+    let text = headers.join('\t') + '\n';
+    filteredData.forEach(row => {
+        text += keys.map(k => row[k]).join('\t') + '\n';
+    });
+
+    navigator.clipboard.writeText(text).then(() => {
+        showBanner('info', 'Copied to clipboard! Paste into Google Sheets or Excel.');
+        setTimeout(closeBanner, 3000);
+    }).catch(() => {
+        showBanner('error', 'Failed to copy — please use CSV download instead.');
+    });
+}
+
+// ── Banner ─────────────────────────────────────────────────────────────
+function showBanner(type, msg) {
+    const banner = document.getElementById('banner');
+    banner.className = 'banner ' + type;
+    document.getElementById('bannerText').textContent = msg;
+    document.getElementById('bannerIcon').textContent = type === 'info' ? 'ℹ️' : type === 'warn' ? '⚠️' : '❌';
+}
+
+function closeBanner() {
+    document.getElementById('banner').className = 'banner';
+}
+
+// ── Loading ────────────────────────────────────────────────────────────
+function showLoading(show) {
+    document.getElementById('loadingOverlay').classList.toggle('active', show);
+}
+
+// ── Keyboard ───────────────────────────────────────────────────────────
+function handleKey(e) {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+
+    if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        selectedRow = Math.min(selectedRow + 1, filteredData.length - 1);
+        renderTable();
+        scrollToRow(selectedRow);
+    } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        selectedRow = Math.max(selectedRow - 1, 0);
+        renderTable();
+        scrollToRow(selectedRow);
+    } else if (e.key === 'r' || e.key === 'R') {
+        refreshData();
+    } else if (e.key === 'Escape') {
+        selectedRow = -1;
+        renderTable();
+    } else if (e.key === '/' || e.key === 'f' && e.ctrlKey) {
+        e.preventDefault();
+        document.getElementById('searchInput').focus();
+    }
+}
+
+function scrollToRow(i) {
+    const rows = document.querySelectorAll('#tableBody tr');
+    if (rows[i]) {
+        rows[i].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+}
+</script>
+
+</body>
+</html>
