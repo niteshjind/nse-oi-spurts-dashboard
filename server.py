@@ -1,18 +1,25 @@
 """
 NSE OI Spurts Dashboard - Flask Backend
-Works seamlessly both on local machines and deployed on Vercel serverless.
+Features:
+- Live market data streaming from NSE India
+- Ultra-fast in-memory cache
+- 5-Day Rolling Memory Archive with automatic daily archiving and 5-day auto-pruning
+- Compatible with local execution and Vercel serverless functions
 """
 
+import json
 import os
 import threading
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 import requests
 from flask import Flask, jsonify, render_template, request
 
 # Setup template path to work across local and Vercel serverless environments
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
+HISTORY_FILE = os.path.join(BASE_DIR, "history_data.json")
+MAX_HISTORY_DAYS = 5
 
 app = Flask(__name__, template_folder=TEMPLATES_DIR)
 
@@ -50,6 +57,72 @@ NSE_HEADERS = {
 
 
 # ---------------------------------------------------------------------------
+# 5-Day Historical Memory Manager
+# ---------------------------------------------------------------------------
+def load_history():
+    """Load 5-day historical snapshots from disk or initialize with seed data."""
+    if os.path.exists(HISTORY_FILE):
+        try:
+            with open(HISTORY_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if isinstance(data, dict) and "dates" in data and "snapshots" in data:
+                    return data
+        except Exception as e:
+            print(f"[History] Error loading history: {e}")
+
+    # Initialize empty history
+    history = {"dates": [], "snapshots": {}}
+    return history
+
+
+def save_daily_snapshot(rows):
+    """Save current day snapshot and prune any history older than MAX_HISTORY_DAYS (5 days)."""
+    if not rows:
+        return
+
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    today_label = datetime.now().strftime("%d %b %Y")
+    today_time = datetime.now().strftime("%I:%M %p")
+
+    try:
+        history = load_history()
+        
+        # Save or update today's snapshot
+        history["snapshots"][today_str] = {
+            "date": today_str,
+            "label": today_label,
+            "timestamp": f"{today_label}, {today_time}",
+            "count": len(rows),
+            "data": rows,
+        }
+
+        # Keep dates list unique and sorted (newest first)
+        if today_str not in history["dates"]:
+            history["dates"].insert(0, today_str)
+
+        # Sort dates descending (newest to oldest)
+        history["dates"] = sorted(list(set(history["dates"])), reverse=True)
+
+        # PRUNING: Automatically delete previous days older than MAX_HISTORY_DAYS (5 days)
+        if len(history["dates"]) > MAX_HISTORY_DAYS:
+            dates_to_keep = history["dates"][:MAX_HISTORY_DAYS]
+            dates_to_remove = history["dates"][MAX_HISTORY_DAYS:]
+            
+            for old_date in dates_to_remove:
+                if old_date in history["snapshots"]:
+                    del history["snapshots"][old_date]
+            
+            history["dates"] = dates_to_keep
+
+        # Write to JSON file
+        with open(HISTORY_FILE, "w", encoding="utf-8") as f:
+            json.dump(history, f, indent=2)
+
+    except Exception as e:
+        print(f"[History] Error saving snapshot: {e}")
+
+
+# ---------------------------------------------------------------------------
 # NSE Data Fetcher
 # ---------------------------------------------------------------------------
 def fetch_oi_spurts():
@@ -84,6 +157,10 @@ def fetch_oi_spurts():
                     "underlyingValue": _num(item.get("underlyingValue", 0)),
                 }
                 normalised.append(row)
+            
+            # Save into 5-day memory snapshot
+            save_daily_snapshot(normalised)
+            
             return normalised
         return None
     except Exception as exc:
@@ -167,6 +244,31 @@ def get_data():
 
     with cache_lock:
         return jsonify(data_cache)
+
+
+@app.route("/api/history")
+def get_history_dates():
+    """Return list of available historical dates (up to 5 days)."""
+    history = load_history()
+    result = []
+    for d in history.get("dates", []):
+        snap = history.get("snapshots", {}).get(d, {})
+        result.append({
+            "date": d,
+            "label": snap.get("label", d),
+            "timestamp": snap.get("timestamp", d),
+            "count": snap.get("count", 0),
+        })
+    return jsonify({"dates": result, "max_days": MAX_HISTORY_DAYS})
+
+
+@app.route("/api/history/<date_str>")
+def get_history_snapshot(date_str):
+    """Return snapshot data for a specific historical date."""
+    history = load_history()
+    if date_str in history.get("snapshots", {}):
+        return jsonify(history["snapshots"][date_str])
+    return jsonify({"error": f"No historical snapshot found for {date_str}"}), 404
 
 
 # ---------------------------------------------------------------------------

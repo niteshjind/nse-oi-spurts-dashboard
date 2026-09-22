@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NSE OI Spurts — Live Dashboard</title>
+    <title>NSE OI Spurts — Live Dashboard & 5-Day Memory</title>
     <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
     <style>
         /* ================================================================
@@ -20,7 +20,7 @@
         }
 
         /* ================================================================
-           TOP BAR  (Google Sheets-style green)
+           TOP BAR (Google Sheets green)
            ================================================================ */
         .topbar {
             background: linear-gradient(135deg, #188038 0%, #1e8e3e 50%, #34a853 100%);
@@ -90,6 +90,134 @@
         .toolbar-btn.primary:hover { background: #1765cc; }
         .toolbar-sep { width: 1px; height: 24px; background: #dadce0; margin: 0 4px; }
 
+        /* LIVE Button */
+        .live-btn {
+            font-weight: 700;
+            letter-spacing: 1px;
+            font-size: 12px;
+            transition: all .2s;
+        }
+        .live-btn.active {
+            background: #d93025;
+            color: #fff;
+            border-color: #d93025;
+            animation: live-glow 2s ease-in-out infinite;
+        }
+        .live-btn.active:hover { background: #b71c1c; }
+        .live-indicator {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: #80868b;
+            display: inline-block;
+            margin-right: 2px;
+        }
+        .live-btn.active .live-indicator {
+            background: #fff;
+            animation: live-pulse 1s ease-in-out infinite;
+        }
+        @keyframes live-pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(1.3); }
+        }
+        @keyframes live-glow {
+            0%, 100% { box-shadow: 0 0 4px rgba(217, 48, 37, 0.3); }
+            50% { box-shadow: 0 0 12px rgba(217, 48, 37, 0.6); }
+        }
+
+        /* TOP 10 BUTTON */
+        .top10-btn {
+            font-weight: 600;
+            font-size: 13px;
+            border-color: #f2994a;
+            color: #d97706;
+            background: #fffdfa;
+            transition: all .2s;
+        }
+        .top10-btn:hover {
+            background: #fef3c7;
+            border-color: #d97706;
+        }
+        .top10-btn.active {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: #fff;
+            border-color: #b45309;
+            box-shadow: 0 2px 6px rgba(217, 119, 6, 0.35);
+        }
+
+        /* ================================================================
+           MEMORY BAR (5-DAY ROLLING HISTORY)
+           ================================================================ */
+        .memory-bar {
+            background: #f1f3f4;
+            border-bottom: 1px solid #dadce0;
+            padding: 5px 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            flex-shrink: 0;
+        }
+        .memory-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: #5f6368;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .memory-tabs {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .memory-tab {
+            padding: 4px 10px;
+            font-size: 12px;
+            font-family: inherit;
+            border: 1px solid #dadce0;
+            background: #fff;
+            color: #3c4043;
+            border-radius: 4px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all .15s;
+        }
+        .memory-tab:hover {
+            background: #e8eaed;
+            border-color: #bdc1c6;
+        }
+        .memory-tab.active {
+            background: #1a73e8;
+            color: #fff;
+            border-color: #1a73e8;
+            font-weight: 600;
+            box-shadow: 0 1px 3px rgba(26,115,232,.3);
+        }
+        .memory-badge {
+            margin-left: auto;
+            font-size: 11px;
+            color: #b45309;
+            background: #fef3c7;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: 500;
+            border: 1px solid #fde68a;
+        }
+        .live-dot-mini {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: #34a853;
+            display: inline-block;
+        }
+        .memory-tab.active .live-dot-mini {
+            background: #fff;
+        }
+
         /* Search box */
         .search-box {
             display: flex;
@@ -107,7 +235,7 @@
             padding: 6px 4px;
             font-size: 13px;
             font-family: inherit;
-            width: 200px;
+            width: 180px;
             color: #202124;
         }
         .search-box .icon { color: #5f6368; font-size: 16px; }
@@ -341,40 +469,6 @@
             z-index: 200;
             margin-top: 4px;
         }
-        /* LIVE button */
-        .live-btn {
-            font-weight: 700;
-            letter-spacing: 1px;
-            font-size: 12px;
-            transition: all .2s;
-        }
-        .live-btn.active {
-            background: #d93025;
-            color: #fff;
-            border-color: #d93025;
-            animation: live-glow 2s ease-in-out infinite;
-        }
-        .live-btn.active:hover { background: #b71c1c; }
-        .live-indicator {
-            width: 8px; height: 8px;
-            border-radius: 50%;
-            background: #80868b;
-            display: inline-block;
-            margin-right: 2px;
-        }
-        .live-btn.active .live-indicator {
-            background: #fff;
-            animation: live-pulse 1s ease-in-out infinite;
-        }
-        @keyframes live-pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.4; transform: scale(1.3); }
-        }
-        @keyframes live-glow {
-            0%, 100% { box-shadow: 0 0 4px rgba(217, 48, 37, 0.3); }
-            50% { box-shadow: 0 0 12px rgba(217, 48, 37, 0.6); }
-        }
-
     </style>
 </head>
 <body>
@@ -384,14 +478,14 @@
     <div class="topbar-icon">📊</div>
     <div class="topbar-title">
         NSE OI Spurts Dashboard
-        <small>Open Interest Spurts — Live Market Analysis</small>
+        <small>Open Interest Spurts — Live Market Analysis & 5-Day Memory</small>
     </div>
     <span id="lastUpdated" style="font-size:12px;opacity:.85;"></span>
 </div>
 
 <!-- ============================  TOOLBAR  ============================ -->
 <div class="toolbar">
-    <button class="toolbar-btn primary" onclick="refreshData()" data-tooltip="Fetch latest data from NSE">
+    <button class="toolbar-btn primary" id="refreshBtn" onclick="refreshData()" data-tooltip="Fetch latest data from NSE">
         🔄 Refresh Data
     </button>
 
@@ -399,6 +493,12 @@
     <button class="toolbar-btn live-btn" id="liveBtn" onclick="toggleLive()" data-tooltip="Real-time updates every 2 seconds">
         <span class="live-indicator" id="liveIndicator"></span>
         <span id="liveBtnText">LIVE</span>
+    </button>
+
+    <!-- TOP 10 BUTTON -->
+    <button class="toolbar-btn top10-btn" id="top10Btn" onclick="toggleTop10()" data-tooltip="Filter and show only Top 10 Stocks by % OI Change">
+        <span id="top10Icon">🔥</span>
+        <span id="top10Text">Top 10 %OI</span>
     </button>
 
     <div class="toolbar-sep"></div>
@@ -431,11 +531,11 @@
     <div class="auto-refresh">
         <span>Show:</span>
         <select id="oiFilter" onchange="applyFilters()">
-            <option value="all">All</option>
+            <option value="all">All Stocks</option>
             <option value="positive_oi">OI Increase ↑</option>
             <option value="negative_oi">OI Decrease ↓</option>
             <option value="high_oi">OI Change > 10%</option>
-            <option value="top20">Top 20 by % OI Change</option>
+            <option value="top20">Top 20 by % OI</option>
         </select>
     </div>
 
@@ -444,6 +544,20 @@
         <span class="icon">🔍</span>
         <input type="text" id="searchInput" placeholder="Search symbol..." oninput="applyFilters()">
     </div>
+</div>
+
+<!-- ============================  MEMORY BAR (5-DAY ROLLING)  ============================ -->
+<div class="memory-bar" id="memoryBar">
+    <div class="memory-label">
+        <span>📅 5-Day Memory:</span>
+    </div>
+    <div class="memory-tabs" id="memoryTabs">
+        <button class="memory-tab active" id="tabLive" onclick="selectMemoryDate('live')" data-tooltip="View live market stream">
+            <span class="live-dot-mini"></span> Live (Today)
+        </button>
+        <!-- Dynamic historical date buttons will be inserted here -->
+    </div>
+    <div class="memory-badge" id="memoryBadge" style="display:none;"></div>
 </div>
 
 <!-- ============================  BANNER  ============================ -->
@@ -505,6 +619,7 @@
 <script>
 // ── State ──────────────────────────────────────────────────────────────
 let allData = [];
+let liveCacheData = [];
 let filteredData = [];
 let sortCol = 'pChangeInOI';
 let sortDir = 'desc';
@@ -513,12 +628,16 @@ let countdownTimer = null;
 let countdownSec = 0;
 let selectedRow = -1;
 let isLiveMode = false;
+let isTop10Mode = false;
 let liveIntervalTimer = null;
 let isRequestInFlight = false;
+let currentMemoryDate = 'live';
+let availableHistoryDates = [];
 
 // ── Init ───────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
     refreshData();
+    loadHistoryDates();
     // Keyboard nav
     document.addEventListener('keydown', handleKey);
 });
@@ -528,7 +647,7 @@ async function refreshData(silent = false) {
     if (isRequestInFlight) return;
     isRequestInFlight = true;
 
-    if (!silent) {
+    if (!silent && currentMemoryDate === 'live') {
         showLoading(true);
     }
     try {
@@ -536,15 +655,23 @@ async function refreshData(silent = false) {
         const resp = await fetch(url);
         const json = await resp.json();
         if (json.data && json.data.length > 0) {
-            allData = json.data;
+            liveCacheData = json.data;
+            if (currentMemoryDate === 'live') {
+                allData = json.data;
+            }
+            // Save client-side rolling memory backup
+            saveClientMemoryBackup(json.data, json.last_updated);
         }
-        if (json.last_updated) {
+        if (json.last_updated && currentMemoryDate === 'live') {
             document.getElementById('lastUpdated').textContent = '🕐 ' + json.last_updated;
         }
         // Source indicator
         const dot = document.getElementById('liveDot');
         const label = document.getElementById('sourceLabel');
-        if (isLiveMode) {
+        if (currentMemoryDate !== 'live') {
+            dot.className = 'live-dot sample';
+            label.innerHTML = `<span style="color:#d97706; font-weight:600;">📅 Memory: ${currentMemoryDate}</span>`;
+        } else if (isLiveMode) {
             dot.className = 'live-dot';
             label.innerHTML = '<span style="color:#d93025; font-weight:700;">⚡ LIVE (2s)</span>';
         } else if (json.source === 'live') {
@@ -555,9 +682,9 @@ async function refreshData(silent = false) {
             label.textContent = 'Sample Data';
         }
         // Banner
-        if (json.error && !isLiveMode) {
+        if (json.error && !isLiveMode && currentMemoryDate === 'live') {
             showBanner('warn', json.error);
-        } else if (!json.error) {
+        } else if (!json.error && currentMemoryDate === 'live') {
             closeBanner();
         }
 
@@ -565,6 +692,8 @@ async function refreshData(silent = false) {
         if (!isLiveMode) {
             resetCountdown();
         }
+        // Update history tabs dynamically if today changed
+        loadHistoryDates();
     } catch (err) {
         if (!silent) {
             showBanner('error', 'Network error: ' + err.message);
@@ -577,8 +706,172 @@ async function refreshData(silent = false) {
     }
 }
 
+// ── Top 10 Stocks Toggle ───────────────────────────────────────────────
+function toggleTop10() {
+    isTop10Mode = !isTop10Mode;
+    const btn = document.getElementById('top10Btn');
+    const btnText = document.getElementById('top10Text');
+
+    if (isTop10Mode) {
+        btn.classList.add('active');
+        btnText.textContent = 'Top 10 Active (ON)';
+        showBanner('info', '🔥 Showing TOP 10 Stocks sorted by highest % Change in OI.');
+        setTimeout(closeBanner, 3000);
+    } else {
+        btn.classList.remove('active');
+        btnText.textContent = 'Top 10 %OI';
+        showBanner('info', 'Showing all stocks.');
+        setTimeout(closeBanner, 2000);
+    }
+    applyFilters();
+}
+
+// ── 5-Day Memory History Manager ───────────────────────────────────────
+async function loadHistoryDates() {
+    try {
+        const resp = await fetch('/api/history');
+        const json = await resp.json();
+        availableHistoryDates = json.dates || [];
+    } catch (e) {
+        // Fallback to client localStorage history
+        availableHistoryDates = getClientMemoryDates();
+    }
+    renderMemoryTabs();
+}
+
+function renderMemoryTabs() {
+    const tabsContainer = document.getElementById('memoryTabs');
+    const liveActive = currentMemoryDate === 'live' ? 'active' : '';
+
+    let html = `
+        <button class="memory-tab ${liveActive}" id="tabLive" onclick="selectMemoryDate('live')" data-tooltip="Switch to real-time live market stream">
+            <span class="live-dot-mini"></span> Live (Today)
+        </button>
+    `;
+
+    availableHistoryDates.forEach(item => {
+        const d = item.date;
+        const label = item.label || d;
+        const active = currentMemoryDate === d ? 'active' : '';
+        html += `
+            <button class="memory-tab ${active}" onclick="selectMemoryDate('${d}')" data-tooltip="View archived data for ${label}">
+                📅 ${label}
+            </button>
+        `;
+    });
+
+    tabsContainer.innerHTML = html;
+}
+
+async function selectMemoryDate(dateStr) {
+    currentMemoryDate = dateStr;
+    const badge = document.getElementById('memoryBadge');
+    const refreshBtn = document.getElementById('refreshBtn');
+
+    renderMemoryTabs();
+
+    if (dateStr === 'live') {
+        badge.style.display = 'none';
+        refreshBtn.disabled = false;
+        refreshBtn.style.opacity = '1';
+        allData = liveCacheData.length > 0 ? liveCacheData : allData;
+        showBanner('info', 'Switched to Live Market Stream.');
+        setTimeout(closeBanner, 2500);
+        refreshData();
+    } else {
+        // Pauses live timer while inspecting past memory
+        if (isLiveMode) {
+            toggleLive(); // Turn off live stream
+        }
+        stopAutoRefresh();
+        refreshBtn.disabled = true;
+        refreshBtn.style.opacity = '0.5';
+
+        badge.style.display = 'inline-block';
+        badge.textContent = `Viewing Memory: ${dateStr}`;
+
+        showLoading(true);
+        try {
+            const resp = await fetch(`/api/history/${dateStr}`);
+            const json = await resp.json();
+            if (json.data && json.data.length > 0) {
+                allData = json.data;
+                document.getElementById('lastUpdated').textContent = `📅 Memory: ${json.timestamp || dateStr}`;
+                showBanner('info', `📅 Displaying archived snapshot for ${json.label || dateStr} (${json.count || json.data.length} stocks)`);
+            } else {
+                // Fallback to client localStorage
+                const localSnap = getClientMemorySnapshot(dateStr);
+                if (localSnap && localSnap.length > 0) {
+                    allData = localSnap;
+                    showBanner('info', `📅 Displaying local memory snapshot for ${dateStr}`);
+                }
+            }
+        } catch (e) {
+            const localSnap = getClientMemorySnapshot(dateStr);
+            if (localSnap && localSnap.length > 0) {
+                allData = localSnap;
+            }
+        } finally {
+            showLoading(false);
+            applyFilters();
+        }
+    }
+}
+
+// ── Client-side 5-Day Memory Backup & Auto-Pruning ─────────────────────
+function saveClientMemoryBackup(rows, timestamp) {
+    if (!rows || rows.length === 0) return;
+    try {
+        const todayStr = new Date().toISOString().slice(0, 10);
+        const todayLabel = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+        
+        let clientHistory = JSON.parse(localStorage.getItem('nse_oi_history') || '{"dates":[],"snapshots":{}}');
+        clientHistory.snapshots[todayStr] = {
+            date: todayStr,
+            label: todayLabel,
+            timestamp: timestamp || todayLabel,
+            data: rows
+        };
+
+        if (!clientHistory.dates.includes(todayStr)) {
+            clientHistory.dates.unshift(todayStr);
+        }
+        clientHistory.dates = [...new Set(clientHistory.dates)].sort().reverse();
+
+        // 5-DAY ROLLING PRUNING: Automatically delete days beyond 5
+        if (clientHistory.dates.length > 5) {
+            const toDelete = clientHistory.dates.slice(5);
+            toDelete.forEach(d => delete clientHistory.snapshots[d]);
+            clientHistory.dates = clientHistory.dates.slice(0, 5);
+        }
+
+        localStorage.setItem('nse_oi_history', JSON.stringify(clientHistory));
+    } catch (_) {}
+}
+
+function getClientMemoryDates() {
+    try {
+        const clientHistory = JSON.parse(localStorage.getItem('nse_oi_history') || '{"dates":[],"snapshots":{}}');
+        return clientHistory.dates.map(d => ({
+            date: d,
+            label: (clientHistory.snapshots[d] && clientHistory.snapshots[d].label) || d,
+            timestamp: (clientHistory.snapshots[d] && clientHistory.snapshots[d].timestamp) || d
+        }));
+    } catch (_) { return []; }
+}
+
+function getClientMemorySnapshot(dateStr) {
+    try {
+        const clientHistory = JSON.parse(localStorage.getItem('nse_oi_history') || '{"dates":[],"snapshots":{}}');
+        return (clientHistory.snapshots[dateStr] && clientHistory.snapshots[dateStr].data) || null;
+    } catch (_) { return null; }
+}
+
 // ── Live Mode Toggle ───────────────────────────────────────────────────
 function toggleLive() {
+    if (currentMemoryDate !== 'live') {
+        selectMemoryDate('live');
+    }
     isLiveMode = !isLiveMode;
     const btn = document.getElementById('liveBtn');
     const btnText = document.getElementById('liveBtnText');
@@ -595,7 +888,7 @@ function toggleLive() {
         // Start 2-second interval
         if (liveIntervalTimer) clearInterval(liveIntervalTimer);
         liveIntervalTimer = setInterval(() => {
-            if (isLiveMode) {
+            if (isLiveMode && currentMemoryDate === 'live') {
                 refreshData(true);
             }
         }, 2000);
@@ -614,18 +907,7 @@ function toggleLive() {
     }
 }
 
-async function loadCached() {
-    try {
-        const resp = await fetch('/api/oi-spurts');
-        const json = await resp.json();
-        if (json.data && json.data.length > 0) {
-            allData = json.data;
-            applyFilters();
-        }
-    } catch (_) {}
-}
-
-// ── Filtering ──────────────────────────────────────────────────────────
+// ── Filtering & Top 10 Engine ──────────────────────────────────────────
 function applyFilters() {
     const search = document.getElementById('searchInput').value.toUpperCase().trim();
     const filter = document.getElementById('oiFilter').value;
@@ -645,14 +927,23 @@ function applyFilters() {
         }
     });
 
-    // Special: top 20 filter
-    if (filter === 'top20') {
+    // Special dropdown top 20 filter
+    if (filter === 'top20' && !isTop10Mode) {
         filteredData.sort((a, b) => b.pChangeInOI - a.pChangeInOI);
         filteredData = filteredData.slice(0, 20);
     }
 
-    // Sort
-    doSort();
+    // 🔥 TOP 10 QUICK BUTTON FILTER (Highest % OI Change)
+    if (isTop10Mode) {
+        filteredData.sort((a, b) => b.pChangeInOI - a.pChangeInOI);
+        filteredData = filteredData.slice(0, 10);
+    } else {
+        // Normal sort
+        doSort();
+        return;
+    }
+
+    renderTable();
 }
 
 // ── Sorting ────────────────────────────────────────────────────────────
@@ -838,7 +1129,8 @@ function downloadCSV() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `NSE_OI_Spurts_${new Date().toISOString().slice(0,10)}.csv`;
+    const dateLabel = currentMemoryDate === 'live' ? new Date().toISOString().slice(0,10) : currentMemoryDate;
+    a.download = `NSE_OI_Spurts_${dateLabel}.csv`;
     a.click();
     URL.revokeObjectURL(url);
     showBanner('info', 'CSV downloaded successfully!');
