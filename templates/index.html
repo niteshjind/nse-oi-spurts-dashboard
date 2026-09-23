@@ -199,7 +199,6 @@
             box-shadow: 0 1px 3px rgba(26,115,232,.3);
         }
         .memory-badge {
-            margin-left: auto;
             font-size: 11px;
             color: #b45309;
             background: #fef3c7;
@@ -216,6 +215,93 @@
         }
         .memory-tab.active .live-dot-mini {
             background: #fff;
+        }
+
+        /* ================================================================
+           CALENDAR DATE PICKER
+           ================================================================ */
+        .calendar-picker-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-left: 8px;
+            padding-left: 10px;
+            border-left: 1px solid #dadce0;
+        }
+        .calendar-picker-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: #5f6368;
+            letter-spacing: 0.4px;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+        .calendar-picker-input {
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            padding: 3px 8px;
+            font-size: 12px;
+            font-family: inherit;
+            background: #fff;
+            color: #3c4043;
+            cursor: pointer;
+            transition: all .15s;
+            height: 28px;
+        }
+        .calendar-picker-input:hover {
+            border-color: #1a73e8;
+            box-shadow: 0 0 0 2px rgba(26,115,232,.1);
+        }
+        .calendar-picker-input:focus {
+            outline: none;
+            border-color: #1a73e8;
+            box-shadow: 0 0 0 2px rgba(26,115,232,.2);
+        }
+        .calendar-fetch-btn {
+            padding: 3px 10px;
+            height: 28px;
+            font-size: 12px;
+            font-family: inherit;
+            border: 1px solid #1a73e8;
+            border-radius: 4px;
+            background: #1a73e8;
+            color: #fff;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all .15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+        }
+        .calendar-fetch-btn:hover { background: #1765cc; }
+        .calendar-fetch-btn:disabled {
+            background: #dadce0;
+            border-color: #dadce0;
+            color: #80868b;
+            cursor: not-allowed;
+        }
+        .calendar-spinner {
+            width: 12px; height: 12px;
+            border: 2px solid rgba(255,255,255,.4);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin .7s linear infinite;
+            display: none;
+        }
+        .calendar-fetch-btn.loading .calendar-spinner { display: inline-block; }
+        .calendar-fetch-btn.loading .calendar-btn-text { display: none; }
+        .historical-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            color: #7627d2;
+            background: #f3e8ff;
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-weight: 600;
+            border: 1px solid #d8b4fe;
         }
 
         /* Search box */
@@ -557,6 +643,23 @@
         </button>
         <!-- Dynamic historical date buttons will be inserted here -->
     </div>
+
+    <!-- Calendar Date Picker for any past date -->
+    <div class="calendar-picker-wrapper">
+        <span class="calendar-picker-label">📆 Past Date:</span>
+        <input type="date"
+               id="historicalDatePicker"
+               class="calendar-picker-input"
+               max=""
+               min="2000-01-01"
+               title="Select any past trading date to view official NSE Bhavcopy data"
+               onchange="onCalendarDateChange()">
+        <button class="calendar-fetch-btn" id="calendarFetchBtn" onclick="fetchHistoricalDate()" disabled>
+            <span class="calendar-spinner"></span>
+            <span class="calendar-btn-text">Load Data</span>
+        </button>
+    </div>
+
     <div class="memory-badge" id="memoryBadge" style="display:none;"></div>
 </div>
 
@@ -633,11 +736,25 @@ let liveIntervalTimer = null;
 let isRequestInFlight = false;
 let currentMemoryDate = 'live';
 let availableHistoryDates = [];
+let isHistoricalMode = false;  // true when viewing NSE Bhavcopy archive data
 
 // ── Init ───────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
     refreshData();
     loadHistoryDates();
+    // Set calendar max date to yesterday (today's data comes from Live tab)
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    // Also skip to last weekday if yesterday is weekend
+    while (yesterday.getDay() === 0 || yesterday.getDay() === 6) {
+        yesterday.setDate(yesterday.getDate() - 1);
+    }
+    const maxDateStr = yesterday.toISOString().slice(0, 10);
+    const picker = document.getElementById('historicalDatePicker');
+    picker.max = maxDateStr;
+    picker.value = maxDateStr; // Pre-fill with last trading day
+    // Enable button since we pre-filled a date
+    document.getElementById('calendarFetchBtn').disabled = false;
     // Keyboard nav
     document.addEventListener('keydown', handleKey);
 });
@@ -771,7 +888,9 @@ async function selectMemoryDate(dateStr) {
     renderMemoryTabs();
 
     if (dateStr === 'live') {
+        isHistoricalMode = false;
         badge.style.display = 'none';
+        badge.className = 'memory-badge'; // Reset to default styling
         refreshBtn.disabled = false;
         refreshBtn.style.opacity = '1';
         allData = liveCacheData.length > 0 ? liveCacheData : allData;
@@ -780,6 +899,7 @@ async function selectMemoryDate(dateStr) {
         refreshData();
     } else {
         // Pauses live timer while inspecting past memory
+        isHistoricalMode = false;
         if (isLiveMode) {
             toggleLive(); // Turn off live stream
         }
@@ -787,6 +907,7 @@ async function selectMemoryDate(dateStr) {
         refreshBtn.disabled = true;
         refreshBtn.style.opacity = '0.5';
 
+        badge.className = 'memory-badge'; // Reset from historical-badge if needed
         badge.style.display = 'inline-block';
         badge.textContent = `Viewing Memory: ${dateStr}`;
 
@@ -815,6 +936,105 @@ async function selectMemoryDate(dateStr) {
             showLoading(false);
             applyFilters();
         }
+    }
+}
+
+// ── Calendar: Past Date Picker (Real NSE Bhavcopy Archive) ─────────────
+function onCalendarDateChange() {
+    const picker = document.getElementById('historicalDatePicker');
+    const btn = document.getElementById('calendarFetchBtn');
+    btn.disabled = !picker.value;
+}
+
+async function fetchHistoricalDate() {
+    const picker = document.getElementById('historicalDatePicker');
+    const dateStr = picker.value;
+    if (!dateStr) return;
+
+    const btn = document.getElementById('calendarFetchBtn');
+
+    // Stop live mode and auto-refresh
+    if (isLiveMode) toggleLive();
+    stopAutoRefresh();
+
+    // Set UI to loading state
+    btn.classList.add('loading');
+    btn.disabled = true;
+    isHistoricalMode = true;
+    currentMemoryDate = dateStr;
+
+    // Un-highlight all memory tabs
+    renderMemoryTabs();
+
+    // Show loading overlay with message
+    document.getElementById('loadingOverlay').classList.add('active');
+    document.querySelector('#loadingOverlay p').textContent =
+        'Fetching official NSE Bhavcopy archive... This may take 10-20 seconds.';
+
+    // Disable refresh button
+    const refreshBtn = document.getElementById('refreshBtn');
+    refreshBtn.disabled = true;
+    refreshBtn.style.opacity = '0.5';
+
+    try {
+        const resp = await fetch(`/api/historical/${dateStr}`);
+        const json = await resp.json();
+
+        if (!resp.ok || json.error) {
+            const errMsg = json.error || `Failed to fetch data for ${dateStr}`;
+            showBanner('error', `❌ ${errMsg}`);
+            // Reset state
+            isHistoricalMode = false;
+            currentMemoryDate = 'live';
+            renderMemoryTabs();
+            return;
+        }
+
+        if (!json.data || json.data.length === 0) {
+            showBanner('warn', `No futures data found for ${json.label || dateStr}. This may be a market holiday.`);
+            isHistoricalMode = false;
+            currentMemoryDate = 'live';
+            renderMemoryTabs();
+            return;
+        }
+
+        // Successfully loaded
+        allData = json.data;
+
+        const label = json.label || dateStr;
+        const weekday = json.weekday || '';
+        const count = json.count || json.data.length;
+
+        document.getElementById('lastUpdated').textContent = `📆 ${label} (${weekday}) — NSE Archive`;
+
+        // Source indicator
+        const dot = document.getElementById('liveDot');
+        const srcLabel = document.getElementById('sourceLabel');
+        dot.className = 'live-dot sample';
+        srcLabel.innerHTML = `<span style="color:#7627d2; font-weight:600;">📆 NSE Archive: ${label}</span>`;
+
+        // Show purple historical badge in memory bar
+        const badge = document.getElementById('memoryBadge');
+        badge.style.display = 'inline-flex';
+        badge.className = 'historical-badge';
+        badge.innerHTML = `📆 NSE Bhavcopy Archive &mdash; ${label} &mdash; ${count} symbols`;
+
+        showBanner('info', `📆 Loaded real NSE Bhavcopy data for ${label} (${weekday}). ${count} F&O symbols. Source: NSE archives.`);
+
+        applyFilters();
+
+    } catch (err) {
+        showBanner('error', `Network error: ${err.message}. Check your internet connection.`);
+        isHistoricalMode = false;
+        currentMemoryDate = 'live';
+        renderMemoryTabs();
+    } finally {
+        btn.classList.remove('loading');
+        btn.disabled = false;
+        document.getElementById('loadingOverlay').classList.remove('active');
+        document.querySelector('#loadingOverlay p').textContent = 'Fetching data from NSE...';
+        refreshBtn.disabled = false;
+        refreshBtn.style.opacity = '1';
     }
 }
 

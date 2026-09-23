@@ -4,13 +4,17 @@ Features:
 - Live market data streaming from NSE India
 - Ultra-fast in-memory cache
 - 5-Day Rolling Memory Archive with automatic daily archiving and 5-day auto-pruning
+- Historical Bhavcopy data fetcher (real NSE F&O archives for any past date)
 - Compatible with local execution and Vercel serverless functions
 """
 
+import csv
+import io
 import json
 import os
 import threading
 import time
+import zipfile
 from datetime import datetime, timedelta
 import requests
 from flask import Flask, jsonify, render_template, request
@@ -55,6 +59,14 @@ NSE_HEADERS = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36 Edg/129.0.0.0",
 }
 
+NSE_JSON_HEADERS = {
+    "accept": "application/json, text/plain, */*",
+    "accept-language": "en-US,en;q=0.9,en-IN;q=0.8",
+    "referer": "https://www.nseindia.com/",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36 Edg/129.0.0.0",
+    "x-requested-with": "XMLHttpRequest",
+}
+
 
 # ---------------------------------------------------------------------------
 # 5-Day Historical Memory Manager
@@ -86,7 +98,7 @@ def save_daily_snapshot(rows):
 
     try:
         history = load_history()
-        
+
         # Save or update today's snapshot
         history["snapshots"][today_str] = {
             "date": today_str,
@@ -107,11 +119,11 @@ def save_daily_snapshot(rows):
         if len(history["dates"]) > MAX_HISTORY_DAYS:
             dates_to_keep = history["dates"][:MAX_HISTORY_DAYS]
             dates_to_remove = history["dates"][MAX_HISTORY_DAYS:]
-            
+
             for old_date in dates_to_remove:
                 if old_date in history["snapshots"]:
                     del history["snapshots"][old_date]
-            
+
             history["dates"] = dates_to_keep
 
         # Write to JSON file
@@ -123,7 +135,7 @@ def save_daily_snapshot(rows):
 
 
 # ---------------------------------------------------------------------------
-# NSE Data Fetcher
+# NSE Data Fetcher (Live)
 # ---------------------------------------------------------------------------
 def fetch_oi_spurts():
     """Fetch OI Spurts data from NSE India."""
@@ -131,14 +143,14 @@ def fetch_oi_spurts():
         session = requests.Session()
         session.get("https://www.nseindia.com", headers=NSE_HEADERS, timeout=8)
         session.get("https://www.nseindia.com/option-chain", headers=NSE_HEADERS, timeout=8)
-        
+
         resp = session.get(
             "https://www.nseindia.com/api/live-analysis-oi-spurts-underlyings",
             headers=NSE_HEADERS,
             timeout=10,
         )
         raw = resp.json()
-        
+
         if isinstance(raw, dict) and "data" in raw:
             rows = raw["data"]
             normalised = []
@@ -157,10 +169,10 @@ def fetch_oi_spurts():
                     "underlyingValue": _num(item.get("underlyingValue", 0)),
                 }
                 normalised.append(row)
-            
+
             # Save into 5-day memory snapshot
             save_daily_snapshot(normalised)
-            
+
             return normalised
         return None
     except Exception as exc:
@@ -178,6 +190,188 @@ def _num(val):
         return float(str(val).replace(",", ""))
     except (ValueError, TypeError):
         return 0
+
+
+# ---------------------------------------------------------------------------
+# NSE Historical Bhavcopy Fetcher (Accurate real archive data)
+# ---------------------------------------------------------------------------
+def _get_prev_trading_day(date_obj):
+    """Get the previous trading day (skip Sat/Sun, no holiday check)."""
+    prev = date_obj - timedelta(days=1)
+    while prev.weekday() >= 5:  # 5=Sat, 6=Sun
+        prev -= timedelta(days=1)
+    return prev
+
+
+def _bhav_url(date_obj):
+    """Build NSE archive Bhavcopy URL for a given date."""
+    year = date_obj.strftime("%Y")
+    mon = date_obj.strftime("%b").upper()   # e.g. SEP
+    dd = date_obj.strftime("%d")            # e.g. 22
+    filename = f"fo{dd}{mon}{year}bhav.csv.zip"
+    return f"https://archives.nseindia.com/content/historical/DERIVATIVES/{year}/{mon}/{filename}"
+
+
+def _download_and_parse_bhavcopy(date_obj, session):
+    """
+    Download the NSE F&O Bhavcopy ZIP for the given date and parse it.
+    Returns a dict: { symbol: { latestOI, volume, underlyingValue, ... } }
+    Raises ValueError with a human-readable message if data unavailable.
+    """
+    url = _bhav_url(date_obj)
+    date_str = date_obj.strftime("%d-%b-%Y")
+    print(f"[Bhavcopy] Fetching: {url}")
+
+    resp = session.get(url, timeout=20)
+    if resp.status_code == 403:
+        raise ValueError(f"NSE returned 403 Forbidden for {date_str}. This date may be too old or access restricted.")
+    if resp.status_code == 404:
+        raise ValueError(f"No Bhavcopy found for {date_str}. This may be a holiday or weekend.")
+    if resp.status_code != 200:
+        raise ValueError(f"NSE server returned HTTP {resp.status_code} for {date_str}.")
+
+    # Unzip and read CSV
+    try:
+        zf = zipfile.ZipFile(io.BytesIO(resp.content))
+        csv_name = [n for n in zf.namelist() if n.lower().endswith('.csv')]
+        if not csv_name:
+            raise ValueError(f"No CSV found inside ZIP for {date_str}.")
+        raw_csv = zf.read(csv_name[0]).decode("utf-8", errors="ignore")
+    except zipfile.BadZipFile:
+        raise ValueError(f"Corrupt or invalid ZIP file for {date_str}.")
+
+    reader = csv.DictReader(io.StringIO(raw_csv))
+    # Strip whitespace from headers
+    reader.fieldnames = [h.strip() for h in (reader.fieldnames or [])]
+
+    symbol_data = {}  # symbol -> aggregated values
+
+    for row in reader:
+        instrument = row.get("INSTRUMENT", "").strip()
+        # Only futures (stock futures + index futures)
+        if instrument not in ("FUTSTK", "FUTIDX"):
+            continue
+
+        symbol = row.get("SYMBOL", "").strip()
+        if not symbol:
+            continue
+
+        open_int = _num(row.get("OPEN_INT", 0))
+        chg_in_oi = _num(row.get("CHG_IN_OI", 0))
+        contracts = _num(row.get("CONTRACTS", 0))
+        close = _num(row.get("CLOSE", 0))
+        settle = _num(row.get("SETTLE_PR", 0))
+        val_inlakh = _num(row.get("VAL_INLAKH", 0))
+
+        if symbol not in symbol_data:
+            symbol_data[symbol] = {
+                "latestOI": 0,
+                "chgInOI": 0,
+                "volume": 0,
+                "underlyingValue": 0,
+                "futValue": 0,
+            }
+
+        symbol_data[symbol]["latestOI"] += open_int
+        symbol_data[symbol]["chgInOI"] += chg_in_oi
+        symbol_data[symbol]["volume"] += contracts
+        symbol_data[symbol]["futValue"] += val_inlakh
+        # Use settle price if close is 0, take the highest close as underlying proxy
+        price = settle if close == 0 else close
+        if price > symbol_data[symbol]["underlyingValue"]:
+            symbol_data[symbol]["underlyingValue"] = price
+
+    return symbol_data
+
+
+def fetch_historical_bhavcopy(date_str):
+    """
+    Fetch accurate OI Spurts data from NSE Bhavcopy archive for a specific past date.
+    date_str: YYYY-MM-DD
+    Returns list of row dicts (same schema as live data), or raises an error.
+    """
+    try:
+        target_date = datetime.strptime(date_str, "%Y-%m-%d")
+    except ValueError:
+        raise ValueError(f"Invalid date format: {date_str}. Expected YYYY-MM-DD.")
+
+    # Reject today or future dates
+    today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    if target_date >= today:
+        raise ValueError("Calendar can only be used for past dates. Use the Live tab for today's data.")
+
+    # Reject weekends
+    if target_date.weekday() >= 5:
+        day_name = target_date.strftime("%A")
+        raise ValueError(f"{date_str} is a {day_name}. NSE is closed on weekends. Please select a weekday.")
+
+    prev_date = _get_prev_trading_day(target_date)
+
+    # Create a session that mimics browser (needed for NSE archive)
+    session = requests.Session()
+    session.headers.update({
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36 Edg/129.0.0.0",
+        "accept": "*/*",
+        "referer": "https://www.nseindia.com/",
+    })
+    # Warm-up NSE cookies
+    try:
+        session.get("https://www.nseindia.com", timeout=8)
+    except Exception:
+        pass
+
+    # Download CURRENT day Bhavcopy
+    current_data = _download_and_parse_bhavcopy(target_date, session)
+    if not current_data:
+        raise ValueError(f"No futures data found in Bhavcopy for {date_str}.")
+
+    # Download PREVIOUS trading day Bhavcopy for prevOI
+    prev_data = {}
+    try:
+        prev_data = _download_and_parse_bhavcopy(prev_date, session)
+    except Exception as e:
+        print(f"[Bhavcopy] Could not fetch prev day ({prev_date.strftime('%Y-%m-%d')}): {e}")
+        # Continue — prevOI will be derived from CHG_IN_OI inside current bhavcopy
+        prev_data = {}
+
+    result = []
+    for symbol, cur in current_data.items():
+        latest_oi = cur["latestOI"]
+        chg_in_oi = cur["chgInOI"]
+
+        # Best prevOI source: prior day bhavcopy latestOI
+        if symbol in prev_data and prev_data[symbol]["latestOI"] > 0:
+            prev_oi = prev_data[symbol]["latestOI"]
+            change_in_oi = latest_oi - prev_oi
+        else:
+            # Fallback: derive from CHG_IN_OI embedded in current bhavcopy
+            change_in_oi = chg_in_oi
+            prev_oi = latest_oi - chg_in_oi
+
+        if prev_oi > 0:
+            p_change = (change_in_oi / prev_oi) * 100
+        elif latest_oi > 0:
+            p_change = 100.0  # new position opened
+        else:
+            p_change = 0.0
+
+        result.append({
+            "symbol": symbol,
+            "latestOI": latest_oi,
+            "prevOI": max(prev_oi, 0),
+            "changeInOI": change_in_oi,
+            "pChangeInOI": round(p_change, 2),
+            "volume": cur["volume"],
+            "futValue": round(cur["futValue"], 2),
+            "optValue": 0,
+            "totalValue": round(cur["futValue"], 2),
+            "premValue": 0,
+            "underlyingValue": cur["underlyingValue"],
+        })
+
+    # Sort by absolute % OI change descending (same as NSE live API)
+    result.sort(key=lambda x: abs(x["pChangeInOI"]), reverse=True)
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -269,6 +463,42 @@ def get_history_snapshot(date_str):
     if date_str in history.get("snapshots", {}):
         return jsonify(history["snapshots"][date_str])
     return jsonify({"error": f"No historical snapshot found for {date_str}"}), 404
+
+
+@app.route("/api/historical/<date_str>")
+def get_historical_bhavcopy(date_str):
+    """
+    Fetch real NSE Bhavcopy data for any past trading date.
+    date_str: YYYY-MM-DD format.
+    Returns accurate OI Spurts data directly from NSE F&O archives.
+    """
+    try:
+        rows = fetch_historical_bhavcopy(date_str)
+        if not rows:
+            return jsonify({"error": f"No futures data found for {date_str}. This may be a market holiday."}), 404
+
+        try:
+            dt = datetime.strptime(date_str, "%Y-%m-%d")
+            label = dt.strftime("%d %b %Y")
+            weekday = dt.strftime("%A")
+        except Exception:
+            label = date_str
+            weekday = ""
+
+        return jsonify({
+            "date": date_str,
+            "label": label,
+            "weekday": weekday,
+            "source": "nse_bhavcopy_archive",
+            "count": len(rows),
+            "data": rows,
+        })
+
+    except ValueError as ve:
+        return jsonify({"error": str(ve)}), 400
+    except Exception as exc:
+        print(f"[Historical Route Error]: {exc}")
+        return jsonify({"error": f"Failed to fetch historical data: {str(exc)}"}), 500
 
 
 # ---------------------------------------------------------------------------
