@@ -264,21 +264,21 @@
             border-color: #1a73e8;
             color: #1967d2;
         }
-        /* Heatmap Dropdown / Modal */
+        /* Light Theme Monthly Calendar Popover */
         .heatmap-popover {
             position: absolute;
             top: calc(100% + 6px);
             left: 0;
-            background: #18181b;
-            color: #f4f4f5;
-            border: 1px solid #27272a;
-            border-radius: 8px;
-            padding: 14px 16px;
-            box-shadow: 0 12px 28px rgba(0,0,0,0.5), 0 2px 6px rgba(0,0,0,0.3);
+            background: #ffffff;
+            color: #202124;
+            border: 1px solid #dadce0;
+            border-radius: 12px;
+            padding: 16px 18px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
             z-index: 1000;
             display: none;
-            width: max-content;
-            max-width: 95vw;
+            width: 320px;
+            font-family: inherit;
         }
         .heatmap-popover.active {
             display: block;
@@ -288,125 +288,160 @@
             from { opacity: 0; transform: translateY(-4px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        .heatmap-header {
+        .calendar-nav-bar {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 10px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid #27272a;
+            margin-bottom: 12px;
         }
-        .heatmap-title {
-            font-size: 12px;
+        .calendar-month-title {
+            font-size: 14px;
             font-weight: 700;
-            color: #fafafa;
+            color: #202124;
             display: flex;
             align-items: center;
             gap: 6px;
         }
-        .heatmap-legend {
+        .calendar-nav-btn {
+            background: #f1f3f4;
+            border: 1px solid #dadce0;
+            color: #3c4043;
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            cursor: pointer;
             display: flex;
-            align-items: center;
-            gap: 12px;
-            font-size: 11px;
-            color: #a1a1aa;
-        }
-        .legend-item {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-        }
-        .legend-swatch {
-            width: 12px;
-            height: 12px;
-            border-radius: 3px;
-        }
-        .legend-swatch.available { background: #16a34a; }
-        .legend-swatch.holiday { background: #9ca3af; }
-        .heatmap-scroll-area {
-            overflow-x: auto;
-            max-width: 780px;
-            padding-bottom: 4px;
-        }
-        .heatmap-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-        .heatmap-day-header {
-            display: flex;
-            gap: 4px;
-            margin-bottom: 2px;
-            padding-left: 78px;
-        }
-        .day-header-lbl {
-            width: 22px;
-            text-align: center;
-            font-size: 9px;
-            font-weight: 600;
-            color: #71717a;
-        }
-        .heatmap-month-row {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .month-name-lbl {
-            width: 72px;
-            font-size: 11px;
-            font-weight: 600;
-            color: #a1a1aa;
-            text-align: right;
-            flex-shrink: 0;
-        }
-        .month-cells-row {
-            display: flex;
-            gap: 4px;
-            flex-wrap: nowrap;
-        }
-        .cal-day-cell {
-            width: 22px;
-            height: 22px;
-            border-radius: 4px;
-            display: inline-flex;
             align-items: center;
             justify-content: center;
-            font-size: 10px;
+            font-size: 12px;
+            font-weight: bold;
+            transition: all .15s;
+        }
+        .calendar-nav-btn:hover:not(:disabled) {
+            background: #e8eaed;
+            color: #1a73e8;
+            border-color: #bdc1c6;
+        }
+        .calendar-nav-btn:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+        .calendar-weekdays-row {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            margin-bottom: 6px;
+            text-align: center;
+        }
+        .weekday-head-cell {
+            font-size: 11px;
             font-weight: 700;
-            color: #ffffff;
+            color: #70757a;
+            padding: 4px 0;
+            text-transform: uppercase;
+        }
+        .weekday-head-cell.weekend {
+            color: #ea4335;
+        }
+        .calendar-days-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+        .cal-day-cell {
+            aspect-ratio: 1 / 1;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
             cursor: pointer;
-            transition: transform .12s, box-shadow .12s;
-            user-select: none;
+            transition: all .15s;
             position: relative;
+            user-select: none;
+            border: 1px solid transparent;
+            background: #ffffff;
+            color: #3c4043;
         }
-        .cal-day-cell:hover {
-            transform: scale(1.3);
-            z-index: 5;
-            box-shadow: 0 0 8px rgba(255,255,255,0.4);
+        .cal-day-cell.empty-pad {
+            cursor: default;
+            background: transparent;
         }
-        .cal-day-cell.available { background: #16a34a; }
-        .cal-day-cell.holiday { background: #9ca3af; cursor: not-allowed; opacity: .85; }
+        .cal-day-cell.available {
+            background: #e6f4ea;
+            color: #137333;
+            border-color: #ceead6;
+        }
+        .cal-day-cell.available:hover {
+            background: #1e8e3e;
+            color: #ffffff;
+            border-color: #1e8e3e;
+            transform: scale(1.08);
+            box-shadow: 0 2px 6px rgba(30,142,62,0.3);
+            z-index: 2;
+        }
+        .cal-day-cell.holiday {
+            background: #f1f3f4;
+            color: #80868b;
+            cursor: not-allowed;
+            border-color: #e8eaed;
+        }
+        .cal-day-cell.holiday::after {
+            content: '🏖️';
+            font-size: 7px;
+            position: absolute;
+            bottom: 2px;
+        }
+        .cal-day-cell.weekend-day {
+            background: #fafafa;
+            color: #d93025;
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
         .cal-day-cell.selected {
-            box-shadow: 0 0 0 2px #fff, 0 0 10px #22c55e;
-            transform: scale(1.2);
-            z-index: 4;
+            background: #1a73e8 !important;
+            color: #ffffff !important;
+            border-color: #1557b0 !important;
+            font-weight: 800;
+            box-shadow: 0 2px 8px rgba(26,115,232,0.4);
+            transform: scale(1.08);
+            z-index: 3;
         }
-        .cal-empty-slot {
-            width: 22px;
-            height: 22px;
-            display: inline-block;
+        .calendar-legend-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid #f1f3f4;
+            font-size: 11px;
+            color: #5f6368;
         }
+        .cal-legend-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .cal-legend-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+        }
+        .cal-legend-dot.avail { background: #1e8e3e; }
+        .cal-legend-dot.hol { background: #9aa0a6; }
+        .cal-legend-dot.wknd { background: #ea4335; }
         .heatmap-tooltip {
             position: fixed;
-            background: #09090b;
-            color: #f4f4f5;
-            padding: 7px 10px;
+            background: #202124;
+            color: #ffffff;
+            padding: 6px 10px;
             border-radius: 6px;
             font-size: 11px;
             pointer-events: none;
             z-index: 9999;
-            box-shadow: 0 4px 14px rgba(0,0,0,0.5);
-            border: 1px solid #27272a;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
             display: none;
             line-height: 1.4;
         }
@@ -810,21 +845,35 @@
         <!-- Hidden input storing selected YYYY-MM-DD -->
         <input type="hidden" id="historicalDatePicker" value="">
 
-        <!-- Interactive Heatmap Popover -->
+        <!-- Interactive Light Monthly Calendar Popover -->
         <div class="heatmap-popover" id="heatmapPopover">
-            <div class="heatmap-header">
-                <div class="heatmap-title">
-                    <span>🗓️ NSE Trading Days (Past 6 Months)</span>
-                </div>
-                <div class="heatmap-legend">
-                    <span class="legend-item"><span class="legend-swatch available"></span> Available</span>
-                    <span class="legend-item"><span class="legend-swatch holiday"></span> NSE Holiday</span>
-                </div>
+            <div class="calendar-nav-bar">
+                <button class="calendar-nav-btn" id="calPrevMonthBtn" onclick="changeCalendarMonth(-1)" title="Previous Month">◀</button>
+                <div class="calendar-month-title" id="calendarCurrentMonthTitle">September 2026</div>
+                <button class="calendar-nav-btn" id="calNextMonthBtn" onclick="changeCalendarMonth(1)" title="Next Month">▶</button>
             </div>
-            <div class="heatmap-scroll-area">
-                <div class="heatmap-grid" id="heatmapGridContainer">
-                    <!-- Populated dynamically by JS -->
-                </div>
+
+            <!-- Standard 7-Day Week Header -->
+            <div class="calendar-weekdays-row">
+                <span class="weekday-head-cell">Mon</span>
+                <span class="weekday-head-cell">Tue</span>
+                <span class="weekday-head-cell">Wed</span>
+                <span class="weekday-head-cell">Thu</span>
+                <span class="weekday-head-cell">Fri</span>
+                <span class="weekday-head-cell weekend">Sat</span>
+                <span class="weekday-head-cell weekend">Sun</span>
+            </div>
+
+            <!-- Calendar Days 7-column Grid -->
+            <div class="calendar-days-grid" id="calendarDaysGrid">
+                <!-- Dynamically populated by JS -->
+            </div>
+
+            <!-- Legend -->
+            <div class="calendar-legend-bar">
+                <span class="cal-legend-item"><span class="cal-legend-dot avail"></span> Trading Day</span>
+                <span class="cal-legend-item"><span class="cal-legend-dot hol"></span> Holiday</span>
+                <span class="cal-legend-item"><span class="cal-legend-dot wknd"></span> Closed</span>
             </div>
         </div>
     </div>
@@ -1121,64 +1170,27 @@ const TRADING_CALENDAR_DATA = [
     {"date":"2026-09-22","weekday":"Tuesday","month":"Sep 2026","availability":"AVAILABLE","symbols":210,"note":"210 F&O symbols"}
 ];
 
+let calendarMonthIndex = 0;
+let calendarMonthsList = [];
+
 function initHeatmapCalendar() {
-    const container = document.getElementById('heatmapGridContainer');
-    if (!container) return;
+    // Collect distinct sorted months from data
+    const monthsSet = new Set();
+    TRADING_CALENDAR_DATA.forEach(d => monthsSet.add(d.month));
+    calendarMonthsList = Array.from(monthsSet);
+    
+    // Set to latest month by default (September 2026)
+    calendarMonthIndex = calendarMonthsList.length - 1;
 
-    // Group by month
-    const monthsMap = {};
-    TRADING_CALENDAR_DATA.forEach(item => {
-        if (!monthsMap[item.month]) monthsMap[item.month] = [];
-        monthsMap[item.month].push(item);
-    });
+    renderMonthlyCalendar();
 
-    const dayHeaders = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    let headerHtml = '<div class="heatmap-day-header">';
-    dayHeaders.forEach(dh => {
-        headerHtml += `<span class="day-header-lbl">${dh}</span>`;
-    });
-    headerHtml += '</div>';
-
-    let gridHtml = headerHtml;
-
-    Object.entries(monthsMap).forEach(([month, days]) => {
-        gridHtml += `<div class="heatmap-month-row">`;
-        gridHtml += `<span class="month-name-lbl">${month}</span>`;
-        gridHtml += `<div class="month-cells-row">`;
-
-        // Offset according to first weekday of month
-        if (days.length > 0) {
-            const firstDate = new Date(days[0].date);
-            const wkd = (firstDate.getDay() + 6) % 7; // Mon=0, Sun=6
-            for (let i = 0; i < wkd; i++) {
-                gridHtml += `<span class="cal-empty-slot"></span>`;
-            }
-        }
-
-        days.forEach(item => {
-            const isAvail = item.availability === 'AVAILABLE';
-            const cellCls = isAvail ? 'available' : 'holiday';
-            const dayNum = item.date.slice(8);
-            const dateStr = item.date;
-
-            gridHtml += `<span class="cal-day-cell ${cellCls}" id="calcell-${dateStr}"
-                onclick="selectHeatmapDate('${dateStr}', '${item.availability}')"
-                onmousemove="showHeatmapTip(event, '${item.date}', '${item.weekday}', '${item.availability}', ${item.symbols}, '${item.note.replace(/'/g, "\\'")}')"
-                onmouseleave="hideHeatmapTip()">${dayNum}</span>`;
-        });
-
-        gridHtml += `</div></div>`;
-    });
-
-    container.innerHTML = gridHtml;
-
-    // Pre-select latest available weekday
+    // Pre-select latest available date
     const latestAvailable = TRADING_CALENDAR_DATA.filter(d => d.availability === 'AVAILABLE').pop();
     if (latestAvailable) {
         setCalendarSelection(latestAvailable.date, false);
     }
 
-    // Close on outside click
+    // Close on click outside
     document.addEventListener('click', (e) => {
         const wrapper = document.getElementById('calendarPickerWrapper');
         const popover = document.getElementById('heatmapPopover');
@@ -1189,16 +1201,107 @@ function initHeatmapCalendar() {
     });
 }
 
+function changeCalendarMonth(delta) {
+    const nextIdx = calendarMonthIndex + delta;
+    if (nextIdx >= 0 && nextIdx < calendarMonthsList.length) {
+        calendarMonthIndex = nextIdx;
+        renderMonthlyCalendar();
+    }
+}
+
+function renderMonthlyCalendar() {
+    const monthStr = calendarMonthsList[calendarMonthIndex];
+    if (!monthStr) return;
+
+    // Update Month Title
+    const titleEl = document.getElementById('calendarCurrentMonthTitle');
+    if (titleEl) titleEl.textContent = monthStr;
+
+    // Nav button states
+    const prevBtn = document.getElementById('calPrevMonthBtn');
+    const nextBtn = document.getElementById('calNextMonthBtn');
+    if (prevBtn) prevBtn.disabled = (calendarMonthIndex <= 0);
+    if (nextBtn) nextBtn.disabled = (calendarMonthIndex >= calendarMonthsList.length - 1);
+
+    // Days in this month from trading calendar
+    const monthData = TRADING_CALENDAR_DATA.filter(d => d.month === monthStr);
+    const dataByDate = {};
+    monthData.forEach(d => { dataByDate[d.date] = d; });
+
+    // Parse month & year to get actual month boundaries
+    const [mName, yStr] = monthStr.split(' ');
+    const year = parseInt(yStr);
+    const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    const monthIndex = monthNames.indexOf(mName);
+
+    const firstOfMonth = new Date(year, monthIndex, 1);
+    const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+
+    // Monday = 0, Sunday = 6
+    const firstDayOffset = (firstOfMonth.getDay() + 6) % 7;
+
+    const gridContainer = document.getElementById('calendarDaysGrid');
+    if (!gridContainer) return;
+
+    let cellsHtml = '';
+
+    // Empty padding slots for days before 1st of month
+    for (let i = 0; i < firstDayOffset; i++) {
+        cellsHtml += '<span class="cal-day-cell empty-pad"></span>';
+    }
+
+    const currentSelectedDate = document.getElementById('historicalDatePicker')?.value || '';
+
+    // Render every day of the month 1..N
+    for (let day = 1; day <= daysInMonth; day++) {
+        const dateObj = new Date(year, monthIndex, day);
+        const yyyy = year;
+        const mm = String(monthIndex + 1).padStart(2, '0');
+        const dd = String(day).padStart(2, '0');
+        const dateStr = `${yyyy}-${mm}-${dd}`;
+        const dayOfWeek = (dateObj.getDay() + 6) % 7; // Mon=0, Sun=6
+        const isWeekend = (dayOfWeek >= 5);
+
+        const dataEntry = dataByDate[dateStr];
+        const isSelected = (dateStr === currentSelectedDate);
+
+        if (isWeekend) {
+            cellsHtml += `<span class="cal-day-cell weekend-day" title="${dateStr} (Weekend - Closed)">${day}</span>`;
+        } else if (dataEntry && dataEntry.availability === 'AVAILABLE') {
+            const selCls = isSelected ? 'selected' : '';
+            cellsHtml += `<span class="cal-day-cell available ${selCls}" id="calcell-${dateStr}"
+                onclick="selectHeatmapDate('${dateStr}', 'AVAILABLE')"
+                onmousemove="showHeatmapTip(event, '${dateStr}', '${dataEntry.weekday}', 'AVAILABLE', ${dataEntry.symbols}, '${dataEntry.note}')"
+                onmouseleave="hideHeatmapTip()">${day}</span>`;
+        } else if (dataEntry && dataEntry.availability === 'HOLIDAY') {
+            cellsHtml += `<span class="cal-day-cell holiday" id="calcell-${dateStr}"
+                onclick="selectHeatmapDate('${dateStr}', 'HOLIDAY')"
+                onmousemove="showHeatmapTip(event, '${dateStr}', '${dataEntry.weekday}', 'HOLIDAY', 0, '${dataEntry.note}')"
+                onmouseleave="hideHeatmapTip()">${day}</span>`;
+        } else {
+            // Future or unrecorded weekday
+            cellsHtml += `<span class="cal-day-cell empty-pad" style="color:#bdc1c6;">${day}</span>`;
+        }
+    }
+
+    gridContainer.innerHTML = cellsHtml;
+}
+
 function toggleHeatmapCalendar() {
     const popover = document.getElementById('heatmapPopover');
     const btn = document.getElementById('calendarToggleBtn');
     const isOpen = popover.classList.toggle('active');
     btn.classList.toggle('open', isOpen);
+    if (isOpen) {
+        renderMonthlyCalendar();
+    }
 }
 
 function selectHeatmapDate(dateStr, availability) {
     if (availability === 'HOLIDAY') {
-        showBanner('warn', `🏖️ ${dateStr} was an official NSE holiday. No trading or Bhavcopy data exists for this day.`);
+        const item = TRADING_CALENDAR_DATA.find(d => d.date === dateStr);
+        const reason = item ? item.note : 'Official NSE Holiday';
+        showBanner('warn', `🏖️ ${dateStr} was an official NSE holiday (${reason}). No trading took place.`);
         return;
     }
     setCalendarSelection(dateStr, true);
@@ -1216,7 +1319,7 @@ function setCalendarSelection(dateStr, enableFetch) {
     const formatted = dt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
     document.getElementById('calendarSelectedLabel').innerHTML = `<b>${formatted}</b>`;
 
-    // Highlight selected cell
+    // Highlight selected cell in current view
     document.querySelectorAll('.cal-day-cell').forEach(el => el.classList.remove('selected'));
     const cell = document.getElementById('calcell-' + dateStr);
     if (cell) cell.classList.add('selected');
@@ -1235,9 +1338,9 @@ function showHeatmapTip(e, date, day, avail, syms, note) {
     const formatted = dt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 
     tip.innerHTML = `<div style="font-weight:700;margin-bottom:2px;">${icon} ${formatted} (${day.slice(0,3)})</div>` +
-        `<div style="color:${isAvail ? '#4ade80' : '#d4d4d8'};">${avail}</div>` +
-        (syms > 0 ? `<div style="color:#a1a1aa;">${syms} F&O symbols available</div>` : '') +
-        `<div style="color:#71717a;font-size:10px;margin-top:2px;">${note}</div>`;
+        `<div style="color:${isAvail ? '#81c995' : '#e8eaed'};font-weight:600;">${isAvail ? 'NSE Trading Day' : 'NSE Holiday'}</div>` +
+        (syms > 0 ? `<div style="color:#dadce0;font-size:10px;">${syms} F&O symbols</div>` : '') +
+        `<div style="color:#bdc1c6;font-size:10px;margin-top:2px;">${note}</div>`;
 
     tip.style.display = 'block';
     tip.style.left = (e.clientX + 14) + 'px';
