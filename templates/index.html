@@ -218,15 +218,16 @@
         }
 
         /* ================================================================
-           CALENDAR DATE PICKER
+           CALENDAR DATE PICKER & INTERACTIVE HEATMAP
            ================================================================ */
         .calendar-picker-wrapper {
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 6px;
             margin-left: 8px;
             padding-left: 10px;
             border-left: 1px solid #dadce0;
+            position: relative;
         }
         .calendar-picker-label {
             font-size: 11px;
@@ -236,26 +237,178 @@
             text-transform: uppercase;
             white-space: nowrap;
         }
-        .calendar-picker-input {
+        .calendar-toggle-btn {
             border: 1px solid #dadce0;
             border-radius: 4px;
-            padding: 3px 8px;
+            padding: 3px 10px;
             font-size: 12px;
             font-family: inherit;
             background: #fff;
-            color: #3c4043;
+            color: #202124;
             cursor: pointer;
-            transition: all .15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
             height: 28px;
+            font-weight: 600;
+            transition: all .15s;
         }
-        .calendar-picker-input:hover {
+        .calendar-toggle-btn:hover {
             border-color: #1a73e8;
+            color: #1a73e8;
+            background: #f8fafd;
             box-shadow: 0 0 0 2px rgba(26,115,232,.1);
         }
-        .calendar-picker-input:focus {
-            outline: none;
+        .calendar-toggle-btn.open {
+            background: #e8f0fe;
             border-color: #1a73e8;
-            box-shadow: 0 0 0 2px rgba(26,115,232,.2);
+            color: #1967d2;
+        }
+        /* Heatmap Dropdown / Modal */
+        .heatmap-popover {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            background: #18181b;
+            color: #f4f4f5;
+            border: 1px solid #27272a;
+            border-radius: 8px;
+            padding: 14px 16px;
+            box-shadow: 0 12px 28px rgba(0,0,0,0.5), 0 2px 6px rgba(0,0,0,0.3);
+            z-index: 1000;
+            display: none;
+            width: max-content;
+            max-width: 95vw;
+        }
+        .heatmap-popover.active {
+            display: block;
+            animation: fadeIn .15s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .heatmap-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #27272a;
+        }
+        .heatmap-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: #fafafa;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .heatmap-legend {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 11px;
+            color: #a1a1aa;
+        }
+        .legend-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .legend-swatch {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+        }
+        .legend-swatch.available { background: #16a34a; }
+        .legend-swatch.holiday { background: #9ca3af; }
+        .heatmap-scroll-area {
+            overflow-x: auto;
+            max-width: 780px;
+            padding-bottom: 4px;
+        }
+        .heatmap-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .heatmap-day-header {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 2px;
+            padding-left: 78px;
+        }
+        .day-header-lbl {
+            width: 22px;
+            text-align: center;
+            font-size: 9px;
+            font-weight: 600;
+            color: #71717a;
+        }
+        .heatmap-month-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .month-name-lbl {
+            width: 72px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #a1a1aa;
+            text-align: right;
+            flex-shrink: 0;
+        }
+        .month-cells-row {
+            display: flex;
+            gap: 4px;
+            flex-wrap: nowrap;
+        }
+        .cal-day-cell {
+            width: 22px;
+            height: 22px;
+            border-radius: 4px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 700;
+            color: #ffffff;
+            cursor: pointer;
+            transition: transform .12s, box-shadow .12s;
+            user-select: none;
+            position: relative;
+        }
+        .cal-day-cell:hover {
+            transform: scale(1.3);
+            z-index: 5;
+            box-shadow: 0 0 8px rgba(255,255,255,0.4);
+        }
+        .cal-day-cell.available { background: #16a34a; }
+        .cal-day-cell.holiday { background: #9ca3af; cursor: not-allowed; opacity: .85; }
+        .cal-day-cell.selected {
+            box-shadow: 0 0 0 2px #fff, 0 0 10px #22c55e;
+            transform: scale(1.2);
+            z-index: 4;
+        }
+        .cal-empty-slot {
+            width: 22px;
+            height: 22px;
+            display: inline-block;
+        }
+        .heatmap-tooltip {
+            position: fixed;
+            background: #09090b;
+            color: #f4f4f5;
+            padding: 7px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            pointer-events: none;
+            z-index: 9999;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+            border: 1px solid #27272a;
+            display: none;
+            line-height: 1.4;
         }
         .calendar-fetch-btn {
             padding: 3px 10px;
@@ -640,24 +793,46 @@
         <span id="liveBarText">Live (Today)</span>
     </button>
 
-    <!-- Calendar Date Picker for any past date (up to 6 months) -->
-    <div class="calendar-picker-wrapper">
+    <!-- Calendar Date Picker with Interactive Dark Heatmap (from Analysis) -->
+    <div class="calendar-picker-wrapper" id="calendarPickerWrapper">
         <span class="calendar-picker-label">📆 Past Date:</span>
-        <input type="date"
-               id="historicalDatePicker"
-               class="calendar-picker-input"
-               max=""
-               min=""
-               title="Select a past trading date (up to 6 months back) — real NSE Bhavcopy archive data"
-               onchange="onCalendarDateChange()">
+        
+        <button class="calendar-toggle-btn" id="calendarToggleBtn" onclick="toggleHeatmapCalendar()" data-tooltip="Choose date from visual market trading calendar">
+            <span id="calendarSelectedLabel">Select Past Date</span>
+            <span style="font-size:10px;opacity:.65;">▼</span>
+        </button>
+
         <button class="calendar-fetch-btn" id="calendarFetchBtn" onclick="fetchHistoricalDate()" disabled>
             <span class="calendar-spinner"></span>
             <span class="calendar-btn-text">Load Data</span>
         </button>
+
+        <!-- Hidden input storing selected YYYY-MM-DD -->
+        <input type="hidden" id="historicalDatePicker" value="">
+
+        <!-- Interactive Heatmap Popover -->
+        <div class="heatmap-popover" id="heatmapPopover">
+            <div class="heatmap-header">
+                <div class="heatmap-title">
+                    <span>🗓️ NSE Trading Days (Past 6 Months)</span>
+                </div>
+                <div class="heatmap-legend">
+                    <span class="legend-item"><span class="legend-swatch available"></span> Available</span>
+                    <span class="legend-item"><span class="legend-swatch holiday"></span> NSE Holiday</span>
+                </div>
+            </div>
+            <div class="heatmap-scroll-area">
+                <div class="heatmap-grid" id="heatmapGridContainer">
+                    <!-- Populated dynamically by JS -->
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="memory-badge" id="memoryBadge" style="display:none;"></div>
 </div>
+
+<div id="heatmapTooltip" class="heatmap-tooltip"></div>
 
 <!-- ============================  BANNER  ============================ -->
 <div class="banner" id="banner">
@@ -735,25 +910,7 @@ let isHistoricalMode = false;  // true when viewing NSE Bhavcopy archive data
 // ── Init ───────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
     refreshData();
-    // Set calendar date constraints:
-    // - max = yesterday (today uses Live button)
-    // - min = 6 months ago (NSE archive limit)
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    while (yesterday.getDay() === 0 || yesterday.getDay() === 6) {
-        yesterday.setDate(yesterday.getDate() - 1);
-    }
-    const sixMonthsAgo = new Date();
-    sixMonthsAgo.setDate(sixMonthsAgo.getDate() - 183);
-
-    const maxDateStr = yesterday.toISOString().slice(0, 10);
-    const minDateStr = sixMonthsAgo.toISOString().slice(0, 10);
-
-    const picker = document.getElementById('historicalDatePicker');
-    picker.max = maxDateStr;
-    picker.min = minDateStr;
-    picker.value = maxDateStr; // Pre-fill with last trading weekday
-    document.getElementById('calendarFetchBtn').disabled = false;
+    initHeatmapCalendar();
     document.addEventListener('keydown', handleKey);
 });
 
@@ -829,10 +986,267 @@ function toggleTop10() {
     applyFilters();
 }
 
-// ── Calendar: Past Date Picker (Real NSE Bhavcopy Archive) ─────────────
-function onCalendarDateChange() {
+// ── Calendar Heatmap (NSE Trading Days Data) ─────────────────────────
+const TRADING_CALENDAR_DATA = [
+    {"date":"2026-03-24","weekday":"Tuesday","month":"Mar 2026","availability":"AVAILABLE","symbols":206,"note":"206 F&O symbols"},
+    {"date":"2026-03-25","weekday":"Wednesday","month":"Mar 2026","availability":"AVAILABLE","symbols":206,"note":"206 F&O symbols"},
+    {"date":"2026-03-26","weekday":"Thursday","month":"Mar 2026","availability":"HOLIDAY","symbols":0,"note":"NSE Holiday (Holi)"},
+    {"date":"2026-03-27","weekday":"Friday","month":"Mar 2026","availability":"AVAILABLE","symbols":206,"note":"206 F&O symbols"},
+    {"date":"2026-03-30","weekday":"Monday","month":"Mar 2026","availability":"AVAILABLE","symbols":206,"note":"206 F&O symbols"},
+    {"date":"2026-03-31","weekday":"Tuesday","month":"Mar 2026","availability":"HOLIDAY","symbols":0,"note":"NSE Holiday (Bank Holiday / FY End)"},
+    {"date":"2026-04-01","weekday":"Wednesday","month":"Apr 2026","availability":"AVAILABLE","symbols":213,"note":"213 F&O symbols"},
+    {"date":"2026-04-02","weekday":"Thursday","month":"Apr 2026","availability":"AVAILABLE","symbols":213,"note":"213 F&O symbols"},
+    {"date":"2026-04-03","weekday":"Friday","month":"Apr 2026","availability":"HOLIDAY","symbols":0,"note":"NSE Holiday (Good Friday)"},
+    {"date":"2026-04-06","weekday":"Monday","month":"Apr 2026","availability":"AVAILABLE","symbols":213,"note":"213 F&O symbols"},
+    {"date":"2026-04-07","weekday":"Tuesday","month":"Apr 2026","availability":"AVAILABLE","symbols":213,"note":"213 F&O symbols"},
+    {"date":"2026-04-08","weekday":"Wednesday","month":"Apr 2026","availability":"AVAILABLE","symbols":213,"note":"213 F&O symbols"},
+    {"date":"2026-04-09","weekday":"Thursday","month":"Apr 2026","availability":"AVAILABLE","symbols":213,"note":"213 F&O symbols"},
+    {"date":"2026-04-10","weekday":"Friday","month":"Apr 2026","availability":"AVAILABLE","symbols":213,"note":"213 F&O symbols"},
+    {"date":"2026-04-13","weekday":"Monday","month":"Apr 2026","availability":"AVAILABLE","symbols":213,"note":"213 F&O symbols"},
+    {"date":"2026-04-14","weekday":"Tuesday","month":"Apr 2026","availability":"HOLIDAY","symbols":0,"note":"NSE Holiday (Dr. Ambedkar Jayanti)"},
+    {"date":"2026-04-15","weekday":"Wednesday","month":"Apr 2026","availability":"AVAILABLE","symbols":213,"note":"213 F&O symbols"},
+    {"date":"2026-04-16","weekday":"Thursday","month":"Apr 2026","availability":"AVAILABLE","symbols":213,"note":"213 F&O symbols"},
+    {"date":"2026-04-17","weekday":"Friday","month":"Apr 2026","availability":"AVAILABLE","symbols":213,"note":"213 F&O symbols"},
+    {"date":"2026-04-20","weekday":"Monday","month":"Apr 2026","availability":"AVAILABLE","symbols":213,"note":"213 F&O symbols"},
+    {"date":"2026-04-21","weekday":"Tuesday","month":"Apr 2026","availability":"AVAILABLE","symbols":213,"note":"213 F&O symbols"},
+    {"date":"2026-04-22","weekday":"Wednesday","month":"Apr 2026","availability":"AVAILABLE","symbols":213,"note":"213 F&O symbols"},
+    {"date":"2026-04-23","weekday":"Thursday","month":"Apr 2026","availability":"AVAILABLE","symbols":213,"note":"213 F&O symbols"},
+    {"date":"2026-04-24","weekday":"Friday","month":"Apr 2026","availability":"AVAILABLE","symbols":213,"note":"213 F&O symbols"},
+    {"date":"2026-04-27","weekday":"Monday","month":"Apr 2026","availability":"AVAILABLE","symbols":213,"note":"213 F&O symbols"},
+    {"date":"2026-04-28","weekday":"Tuesday","month":"Apr 2026","availability":"AVAILABLE","symbols":213,"note":"213 F&O symbols"},
+    {"date":"2026-04-29","weekday":"Wednesday","month":"Apr 2026","availability":"AVAILABLE","symbols":209,"note":"209 F&O symbols"},
+    {"date":"2026-04-30","weekday":"Thursday","month":"Apr 2026","availability":"AVAILABLE","symbols":209,"note":"209 F&O symbols"},
+    {"date":"2026-05-01","weekday":"Friday","month":"May 2026","availability":"HOLIDAY","symbols":0,"note":"NSE Holiday (Maharashtra Day)"},
+    {"date":"2026-05-04","weekday":"Monday","month":"May 2026","availability":"AVAILABLE","symbols":209,"note":"209 F&O symbols"},
+    {"date":"2026-05-05","weekday":"Tuesday","month":"May 2026","availability":"AVAILABLE","symbols":209,"note":"209 F&O symbols"},
+    {"date":"2026-05-06","weekday":"Wednesday","month":"May 2026","availability":"AVAILABLE","symbols":209,"note":"209 F&O symbols"},
+    {"date":"2026-05-07","weekday":"Thursday","month":"May 2026","availability":"AVAILABLE","symbols":209,"note":"209 F&O symbols"},
+    {"date":"2026-05-08","weekday":"Friday","month":"May 2026","availability":"AVAILABLE","symbols":209,"note":"209 F&O symbols"},
+    {"date":"2026-05-11","weekday":"Monday","month":"May 2026","availability":"AVAILABLE","symbols":209,"note":"209 F&O symbols"},
+    {"date":"2026-05-12","weekday":"Tuesday","month":"May 2026","availability":"AVAILABLE","symbols":209,"note":"209 F&O symbols"},
+    {"date":"2026-05-13","weekday":"Wednesday","month":"May 2026","availability":"AVAILABLE","symbols":209,"note":"209 F&O symbols"},
+    {"date":"2026-05-14","weekday":"Thursday","month":"May 2026","availability":"AVAILABLE","symbols":209,"note":"209 F&O symbols"},
+    {"date":"2026-05-15","weekday":"Friday","month":"May 2026","availability":"AVAILABLE","symbols":209,"note":"209 F&O symbols"},
+    {"date":"2026-05-18","weekday":"Monday","month":"May 2026","availability":"AVAILABLE","symbols":209,"note":"209 F&O symbols"},
+    {"date":"2026-05-19","weekday":"Tuesday","month":"May 2026","availability":"AVAILABLE","symbols":209,"note":"209 F&O symbols"},
+    {"date":"2026-05-20","weekday":"Wednesday","month":"May 2026","availability":"AVAILABLE","symbols":209,"note":"209 F&O symbols"},
+    {"date":"2026-05-21","weekday":"Thursday","month":"May 2026","availability":"AVAILABLE","symbols":209,"note":"209 F&O symbols"},
+    {"date":"2026-05-22","weekday":"Friday","month":"May 2026","availability":"AVAILABLE","symbols":209,"note":"209 F&O symbols"},
+    {"date":"2026-05-25","weekday":"Monday","month":"May 2026","availability":"AVAILABLE","symbols":209,"note":"209 F&O symbols"},
+    {"date":"2026-05-26","weekday":"Tuesday","month":"May 2026","availability":"AVAILABLE","symbols":209,"note":"209 F&O symbols"},
+    {"date":"2026-05-27","weekday":"Wednesday","month":"May 2026","availability":"AVAILABLE","symbols":211,"note":"211 F&O symbols"},
+    {"date":"2026-05-28","weekday":"Thursday","month":"May 2026","availability":"HOLIDAY","symbols":0,"note":"NSE Holiday (Buddha Purnima)"},
+    {"date":"2026-05-29","weekday":"Friday","month":"May 2026","availability":"AVAILABLE","symbols":211,"note":"211 F&O symbols"},
+    {"date":"2026-06-01","weekday":"Monday","month":"Jun 2026","availability":"AVAILABLE","symbols":211,"note":"211 F&O symbols"},
+    {"date":"2026-06-02","weekday":"Tuesday","month":"Jun 2026","availability":"AVAILABLE","symbols":211,"note":"211 F&O symbols"},
+    {"date":"2026-06-03","weekday":"Wednesday","month":"Jun 2026","availability":"AVAILABLE","symbols":211,"note":"211 F&O symbols"},
+    {"date":"2026-06-04","weekday":"Thursday","month":"Jun 2026","availability":"AVAILABLE","symbols":211,"note":"211 F&O symbols"},
+    {"date":"2026-06-05","weekday":"Friday","month":"Jun 2026","availability":"AVAILABLE","symbols":211,"note":"211 F&O symbols"},
+    {"date":"2026-06-08","weekday":"Monday","month":"Jun 2026","availability":"AVAILABLE","symbols":211,"note":"211 F&O symbols"},
+    {"date":"2026-06-09","weekday":"Tuesday","month":"Jun 2026","availability":"AVAILABLE","symbols":211,"note":"211 F&O symbols"},
+    {"date":"2026-06-10","weekday":"Wednesday","month":"Jun 2026","availability":"AVAILABLE","symbols":211,"note":"211 F&O symbols"},
+    {"date":"2026-06-11","weekday":"Thursday","month":"Jun 2026","availability":"AVAILABLE","symbols":211,"note":"211 F&O symbols"},
+    {"date":"2026-06-12","weekday":"Friday","month":"Jun 2026","availability":"AVAILABLE","symbols":211,"note":"211 F&O symbols"},
+    {"date":"2026-06-15","weekday":"Monday","month":"Jun 2026","availability":"AVAILABLE","symbols":211,"note":"211 F&O symbols"},
+    {"date":"2026-06-16","weekday":"Tuesday","month":"Jun 2026","availability":"AVAILABLE","symbols":211,"note":"211 F&O symbols"},
+    {"date":"2026-06-17","weekday":"Wednesday","month":"Jun 2026","availability":"AVAILABLE","symbols":211,"note":"211 F&O symbols"},
+    {"date":"2026-06-18","weekday":"Thursday","month":"Jun 2026","availability":"AVAILABLE","symbols":211,"note":"211 F&O symbols"},
+    {"date":"2026-06-19","weekday":"Friday","month":"Jun 2026","availability":"AVAILABLE","symbols":211,"note":"211 F&O symbols"},
+    {"date":"2026-06-22","weekday":"Monday","month":"Jun 2026","availability":"AVAILABLE","symbols":211,"note":"211 F&O symbols"},
+    {"date":"2026-06-23","weekday":"Tuesday","month":"Jun 2026","availability":"AVAILABLE","symbols":211,"note":"211 F&O symbols"},
+    {"date":"2026-06-24","weekday":"Wednesday","month":"Jun 2026","availability":"AVAILABLE","symbols":211,"note":"211 F&O symbols"},
+    {"date":"2026-06-25","weekday":"Thursday","month":"Jun 2026","availability":"AVAILABLE","symbols":211,"note":"211 F&O symbols"},
+    {"date":"2026-06-26","weekday":"Friday","month":"Jun 2026","availability":"HOLIDAY","symbols":0,"note":"NSE Holiday (Bakri Eid)"},
+    {"date":"2026-06-29","weekday":"Monday","month":"Jun 2026","availability":"AVAILABLE","symbols":211,"note":"211 F&O symbols"},
+    {"date":"2026-06-30","weekday":"Tuesday","month":"Jun 2026","availability":"AVAILABLE","symbols":211,"note":"211 F&O symbols"},
+    {"date":"2026-07-01","weekday":"Wednesday","month":"Jul 2026","availability":"AVAILABLE","symbols":210,"note":"210 F&O symbols"},
+    {"date":"2026-07-02","weekday":"Thursday","month":"Jul 2026","availability":"AVAILABLE","symbols":210,"note":"210 F&O symbols"},
+    {"date":"2026-07-03","weekday":"Friday","month":"Jul 2026","availability":"AVAILABLE","symbols":210,"note":"210 F&O symbols"},
+    {"date":"2026-07-06","weekday":"Monday","month":"Jul 2026","availability":"AVAILABLE","symbols":210,"note":"210 F&O symbols"},
+    {"date":"2026-07-07","weekday":"Tuesday","month":"Jul 2026","availability":"AVAILABLE","symbols":210,"note":"210 F&O symbols"},
+    {"date":"2026-07-08","weekday":"Wednesday","month":"Jul 2026","availability":"AVAILABLE","symbols":210,"note":"210 F&O symbols"},
+    {"date":"2026-07-09","weekday":"Thursday","month":"Jul 2026","availability":"AVAILABLE","symbols":210,"note":"210 F&O symbols"},
+    {"date":"2026-07-10","weekday":"Friday","month":"Jul 2026","availability":"AVAILABLE","symbols":210,"note":"210 F&O symbols"},
+    {"date":"2026-07-13","weekday":"Monday","month":"Jul 2026","availability":"AVAILABLE","symbols":210,"note":"210 F&O symbols"},
+    {"date":"2026-07-14","weekday":"Tuesday","month":"Jul 2026","availability":"AVAILABLE","symbols":210,"note":"210 F&O symbols"},
+    {"date":"2026-07-15","weekday":"Wednesday","month":"Jul 2026","availability":"AVAILABLE","symbols":210,"note":"210 F&O symbols"},
+    {"date":"2026-07-16","weekday":"Thursday","month":"Jul 2026","availability":"AVAILABLE","symbols":210,"note":"210 F&O symbols"},
+    {"date":"2026-07-17","weekday":"Friday","month":"Jul 2026","availability":"AVAILABLE","symbols":210,"note":"210 F&O symbols"},
+    {"date":"2026-07-20","weekday":"Monday","month":"Jul 2026","availability":"AVAILABLE","symbols":210,"note":"210 F&O symbols"},
+    {"date":"2026-07-21","weekday":"Tuesday","month":"Jul 2026","availability":"AVAILABLE","symbols":210,"note":"210 F&O symbols"},
+    {"date":"2026-07-22","weekday":"Wednesday","month":"Jul 2026","availability":"AVAILABLE","symbols":210,"note":"210 F&O symbols"},
+    {"date":"2026-07-23","weekday":"Thursday","month":"Jul 2026","availability":"AVAILABLE","symbols":210,"note":"210 F&O symbols"},
+    {"date":"2026-07-24","weekday":"Friday","month":"Jul 2026","availability":"AVAILABLE","symbols":210,"note":"210 F&O symbols"},
+    {"date":"2026-07-27","weekday":"Monday","month":"Jul 2026","availability":"AVAILABLE","symbols":210,"note":"210 F&O symbols"},
+    {"date":"2026-07-28","weekday":"Tuesday","month":"Jul 2026","availability":"AVAILABLE","symbols":210,"note":"210 F&O symbols"},
+    {"date":"2026-07-29","weekday":"Wednesday","month":"Jul 2026","availability":"AVAILABLE","symbols":208,"note":"208 F&O symbols"},
+    {"date":"2026-07-30","weekday":"Thursday","month":"Jul 2026","availability":"AVAILABLE","symbols":208,"note":"208 F&O symbols"},
+    {"date":"2026-07-31","weekday":"Friday","month":"Jul 2026","availability":"AVAILABLE","symbols":208,"note":"208 F&O symbols"},
+    {"date":"2026-08-03","weekday":"Monday","month":"Aug 2026","availability":"AVAILABLE","symbols":208,"note":"208 F&O symbols"},
+    {"date":"2026-08-04","weekday":"Tuesday","month":"Aug 2026","availability":"AVAILABLE","symbols":208,"note":"208 F&O symbols"},
+    {"date":"2026-08-05","weekday":"Wednesday","month":"Aug 2026","availability":"AVAILABLE","symbols":208,"note":"208 F&O symbols"},
+    {"date":"2026-08-06","weekday":"Thursday","month":"Aug 2026","availability":"AVAILABLE","symbols":208,"note":"208 F&O symbols"},
+    {"date":"2026-08-07","weekday":"Friday","month":"Aug 2026","availability":"AVAILABLE","symbols":208,"note":"208 F&O symbols"},
+    {"date":"2026-08-10","weekday":"Monday","month":"Aug 2026","availability":"AVAILABLE","symbols":208,"note":"208 F&O symbols"},
+    {"date":"2026-08-11","weekday":"Tuesday","month":"Aug 2026","availability":"AVAILABLE","symbols":208,"note":"208 F&O symbols"},
+    {"date":"2026-08-12","weekday":"Wednesday","month":"Aug 2026","availability":"AVAILABLE","symbols":208,"note":"208 F&O symbols"},
+    {"date":"2026-08-13","weekday":"Thursday","month":"Aug 2026","availability":"AVAILABLE","symbols":208,"note":"208 F&O symbols"},
+    {"date":"2026-08-14","weekday":"Friday","month":"Aug 2026","availability":"AVAILABLE","symbols":208,"note":"208 F&O symbols"},
+    {"date":"2026-08-17","weekday":"Monday","month":"Aug 2026","availability":"AVAILABLE","symbols":208,"note":"208 F&O symbols"},
+    {"date":"2026-08-18","weekday":"Tuesday","month":"Aug 2026","availability":"AVAILABLE","symbols":208,"note":"208 F&O symbols"},
+    {"date":"2026-08-19","weekday":"Wednesday","month":"Aug 2026","availability":"AVAILABLE","symbols":208,"note":"208 F&O symbols"},
+    {"date":"2026-08-20","weekday":"Thursday","month":"Aug 2026","availability":"AVAILABLE","symbols":208,"note":"208 F&O symbols"},
+    {"date":"2026-08-21","weekday":"Friday","month":"Aug 2026","availability":"AVAILABLE","symbols":208,"note":"208 F&O symbols"},
+    {"date":"2026-08-24","weekday":"Monday","month":"Aug 2026","availability":"AVAILABLE","symbols":208,"note":"208 F&O symbols"},
+    {"date":"2026-08-25","weekday":"Tuesday","month":"Aug 2026","availability":"AVAILABLE","symbols":208,"note":"208 F&O symbols"},
+    {"date":"2026-08-26","weekday":"Wednesday","month":"Aug 2026","availability":"AVAILABLE","symbols":210,"note":"210 F&O symbols"},
+    {"date":"2026-08-27","weekday":"Thursday","month":"Aug 2026","availability":"AVAILABLE","symbols":210,"note":"210 F&O symbols"},
+    {"date":"2026-08-28","weekday":"Friday","month":"Aug 2026","availability":"AVAILABLE","symbols":210,"note":"210 F&O symbols"},
+    {"date":"2026-08-31","weekday":"Monday","month":"Aug 2026","availability":"AVAILABLE","symbols":210,"note":"210 F&O symbols"},
+    {"date":"2026-09-01","weekday":"Tuesday","month":"Sep 2026","availability":"AVAILABLE","symbols":210,"note":"210 F&O symbols"},
+    {"date":"2026-09-02","weekday":"Wednesday","month":"Sep 2026","availability":"AVAILABLE","symbols":210,"note":"210 F&O symbols"},
+    {"date":"2026-09-03","weekday":"Thursday","month":"Sep 2026","availability":"AVAILABLE","symbols":210,"note":"210 F&O symbols"},
+    {"date":"2026-09-04","weekday":"Friday","month":"Sep 2026","availability":"AVAILABLE","symbols":210,"note":"210 F&O symbols"},
+    {"date":"2026-09-07","weekday":"Monday","month":"Sep 2026","availability":"AVAILABLE","symbols":210,"note":"210 F&O symbols"},
+    {"date":"2026-09-08","weekday":"Tuesday","month":"Sep 2026","availability":"AVAILABLE","symbols":210,"note":"210 F&O symbols"},
+    {"date":"2026-09-09","weekday":"Wednesday","month":"Sep 2026","availability":"AVAILABLE","symbols":210,"note":"210 F&O symbols"},
+    {"date":"2026-09-10","weekday":"Thursday","month":"Sep 2026","availability":"AVAILABLE","symbols":210,"note":"210 F&O symbols"},
+    {"date":"2026-09-11","weekday":"Friday","month":"Sep 2026","availability":"AVAILABLE","symbols":210,"note":"210 F&O symbols"},
+    {"date":"2026-09-14","weekday":"Monday","month":"Sep 2026","availability":"HOLIDAY","symbols":0,"note":"NSE Holiday (Anant Chaturdashi)"},
+    {"date":"2026-09-15","weekday":"Tuesday","month":"Sep 2026","availability":"AVAILABLE","symbols":210,"note":"210 F&O symbols"},
+    {"date":"2026-09-16","weekday":"Wednesday","month":"Sep 2026","availability":"AVAILABLE","symbols":210,"note":"210 F&O symbols"},
+    {"date":"2026-09-17","weekday":"Thursday","month":"Sep 2026","availability":"AVAILABLE","symbols":210,"note":"210 F&O symbols"},
+    {"date":"2026-09-18","weekday":"Friday","month":"Sep 2026","availability":"AVAILABLE","symbols":210,"note":"210 F&O symbols"},
+    {"date":"2026-09-21","weekday":"Monday","month":"Sep 2026","availability":"AVAILABLE","symbols":210,"note":"210 F&O symbols"},
+    {"date":"2026-09-22","weekday":"Tuesday","month":"Sep 2026","availability":"AVAILABLE","symbols":210,"note":"210 F&O symbols"}
+];
+
+function initHeatmapCalendar() {
+    const container = document.getElementById('heatmapGridContainer');
+    if (!container) return;
+
+    // Group by month
+    const monthsMap = {};
+    TRADING_CALENDAR_DATA.forEach(item => {
+        if (!monthsMap[item.month]) monthsMap[item.month] = [];
+        monthsMap[item.month].push(item);
+    });
+
+    const dayHeaders = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    let headerHtml = '<div class="heatmap-day-header">';
+    dayHeaders.forEach(dh => {
+        headerHtml += `<span class="day-header-lbl">${dh}</span>`;
+    });
+    headerHtml += '</div>';
+
+    let gridHtml = headerHtml;
+
+    Object.entries(monthsMap).forEach(([month, days]) => {
+        gridHtml += `<div class="heatmap-month-row">`;
+        gridHtml += `<span class="month-name-lbl">${month}</span>`;
+        gridHtml += `<div class="month-cells-row">`;
+
+        // Offset according to first weekday of month
+        if (days.length > 0) {
+            const firstDate = new Date(days[0].date);
+            const wkd = (firstDate.getDay() + 6) % 7; // Mon=0, Sun=6
+            for (let i = 0; i < wkd; i++) {
+                gridHtml += `<span class="cal-empty-slot"></span>`;
+            }
+        }
+
+        days.forEach(item => {
+            const isAvail = item.availability === 'AVAILABLE';
+            const cellCls = isAvail ? 'available' : 'holiday';
+            const dayNum = item.date.slice(8);
+            const dateStr = item.date;
+
+            gridHtml += `<span class="cal-day-cell ${cellCls}" id="calcell-${dateStr}"
+                onclick="selectHeatmapDate('${dateStr}', '${item.availability}')"
+                onmousemove="showHeatmapTip(event, '${item.date}', '${item.weekday}', '${item.availability}', ${item.symbols}, '${item.note.replace(/'/g, "\\'")}')"
+                onmouseleave="hideHeatmapTip()">${dayNum}</span>`;
+        });
+
+        gridHtml += `</div></div>`;
+    });
+
+    container.innerHTML = gridHtml;
+
+    // Pre-select latest available weekday
+    const latestAvailable = TRADING_CALENDAR_DATA.filter(d => d.availability === 'AVAILABLE').pop();
+    if (latestAvailable) {
+        setCalendarSelection(latestAvailable.date, false);
+    }
+
+    // Close on outside click
+    document.addEventListener('click', (e) => {
+        const wrapper = document.getElementById('calendarPickerWrapper');
+        const popover = document.getElementById('heatmapPopover');
+        if (popover && wrapper && !wrapper.contains(e.target)) {
+            popover.classList.remove('active');
+            document.getElementById('calendarToggleBtn')?.classList.remove('open');
+        }
+    });
+}
+
+function toggleHeatmapCalendar() {
+    const popover = document.getElementById('heatmapPopover');
+    const btn = document.getElementById('calendarToggleBtn');
+    const isOpen = popover.classList.toggle('active');
+    btn.classList.toggle('open', isOpen);
+}
+
+function selectHeatmapDate(dateStr, availability) {
+    if (availability === 'HOLIDAY') {
+        showBanner('warn', `🏖️ ${dateStr} was an official NSE holiday. No trading or Bhavcopy data exists for this day.`);
+        return;
+    }
+    setCalendarSelection(dateStr, true);
+    // Close popover
+    document.getElementById('heatmapPopover').classList.remove('active');
+    document.getElementById('calendarToggleBtn').classList.remove('open');
+}
+
+function setCalendarSelection(dateStr, enableFetch) {
+    const hiddenInput = document.getElementById('historicalDatePicker');
+    hiddenInput.value = dateStr;
+
+    // Update button display label
+    const dt = new Date(dateStr);
+    const formatted = dt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    document.getElementById('calendarSelectedLabel').innerHTML = `<b>${formatted}</b>`;
+
+    // Highlight selected cell
+    document.querySelectorAll('.cal-day-cell').forEach(el => el.classList.remove('selected'));
+    const cell = document.getElementById('calcell-' + dateStr);
+    if (cell) cell.classList.add('selected');
+
+    // Enable fetch button
     const btn = document.getElementById('calendarFetchBtn');
-    btn.disabled = !document.getElementById('historicalDatePicker').value;
+    if (btn) btn.disabled = !dateStr;
+}
+
+function showHeatmapTip(e, date, day, avail, syms, note) {
+    const tip = document.getElementById('heatmapTooltip');
+    if (!tip) return;
+    const isAvail = avail === 'AVAILABLE';
+    const icon = isAvail ? '🟢' : '🏖️';
+    const dt = new Date(date);
+    const formatted = dt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+
+    tip.innerHTML = `<div style="font-weight:700;margin-bottom:2px;">${icon} ${formatted} (${day.slice(0,3)})</div>` +
+        `<div style="color:${isAvail ? '#4ade80' : '#d4d4d8'};">${avail}</div>` +
+        (syms > 0 ? `<div style="color:#a1a1aa;">${syms} F&O symbols available</div>` : '') +
+        `<div style="color:#71717a;font-size:10px;margin-top:2px;">${note}</div>`;
+
+    tip.style.display = 'block';
+    tip.style.left = (e.clientX + 14) + 'px';
+    tip.style.top = (e.clientY - 10) + 'px';
+}
+
+function hideHeatmapTip() {
+    const tip = document.getElementById('heatmapTooltip');
+    if (tip) tip.style.display = 'none';
 }
 
 // Switch back to live market data from historical view
