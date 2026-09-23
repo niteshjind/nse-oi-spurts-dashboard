@@ -564,7 +564,7 @@
     <div class="topbar-icon">📊</div>
     <div class="topbar-title">
         NSE OI Spurts Dashboard
-        <small>Open Interest Spurts — Live Market Analysis & 5-Day Memory</small>
+        <small>Open Interest Spurts — Live Market Analysis & Past Date Archive</small>
     </div>
     <span id="lastUpdated" style="font-size:12px;opacity:.85;"></span>
 </div>
@@ -632,19 +632,15 @@
     </div>
 </div>
 
-<!-- ============================  MEMORY BAR (5-DAY ROLLING)  ============================ -->
+<!-- ============================  HISTORICAL DATE BAR  ============================ -->
 <div class="memory-bar" id="memoryBar">
-    <div class="memory-label">
-        <span>📅 5-Day Memory:</span>
-    </div>
-    <div class="memory-tabs" id="memoryTabs">
-        <button class="memory-tab active" id="tabLive" onclick="selectMemoryDate('live')" data-tooltip="View live market stream">
-            <span class="live-dot-mini"></span> Live (Today)
-        </button>
-        <!-- Dynamic historical date buttons will be inserted here -->
-    </div>
+    <!-- Live indicator (clickable to go back when in historical mode) -->
+    <button class="memory-tab active" id="tabLive" onclick="backToLive()" data-tooltip="Switch back to live market data">
+        <span class="live-dot-mini" id="liveBarDot"></span>
+        <span id="liveBarText">Live (Today)</span>
+    </button>
 
-    <!-- Calendar Date Picker for any past date -->
+    <!-- Calendar Date Picker for any past date (up to 6 months) -->
     <div class="calendar-picker-wrapper">
         <span class="calendar-picker-label">📆 Past Date:</span>
         <input type="date"
@@ -652,7 +648,7 @@
                class="calendar-picker-input"
                max=""
                min=""
-               title="Select a past trading date (up to 6 months back) to view official NSE Bhavcopy data"
+               title="Select a past trading date (up to 6 months back) — real NSE Bhavcopy archive data"
                onchange="onCalendarDateChange()">
         <button class="calendar-fetch-btn" id="calendarFetchBtn" onclick="fetchHistoricalDate()" disabled>
             <span class="calendar-spinner"></span>
@@ -734,20 +730,16 @@ let isLiveMode = false;
 let isTop10Mode = false;
 let liveIntervalTimer = null;
 let isRequestInFlight = false;
-let currentMemoryDate = 'live';
-let availableHistoryDates = [];
 let isHistoricalMode = false;  // true when viewing NSE Bhavcopy archive data
 
 // ── Init ───────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
     refreshData();
-    loadHistoryDates();
     // Set calendar date constraints:
-    // - max = yesterday (today uses Live tab)
-    // - min = 6 months ago (NSE only maintains recent archive)
+    // - max = yesterday (today uses Live button)
+    // - min = 6 months ago (NSE archive limit)
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
-    // Skip weekends for yesterday
     while (yesterday.getDay() === 0 || yesterday.getDay() === 6) {
         yesterday.setDate(yesterday.getDate() - 1);
     }
@@ -760,10 +752,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const picker = document.getElementById('historicalDatePicker');
     picker.max = maxDateStr;
     picker.min = minDateStr;
-    picker.value = maxDateStr; // Pre-fill with last weekday
-    // Enable button since we pre-filled
+    picker.value = maxDateStr; // Pre-fill with last trading weekday
     document.getElementById('calendarFetchBtn').disabled = false;
-    // Keyboard nav
     document.addEventListener('keydown', handleKey);
 });
 
@@ -772,62 +762,50 @@ async function refreshData(silent = false) {
     if (isRequestInFlight) return;
     isRequestInFlight = true;
 
-    if (!silent && currentMemoryDate === 'live') {
+    if (!silent && !isHistoricalMode) {
         showLoading(true);
     }
     try {
         const url = isLiveMode ? '/api/refresh?live=true' : '/api/refresh';
         const resp = await fetch(url);
         const json = await resp.json();
-        if (json.data && json.data.length > 0) {
+        if (json.data && json.data.length > 0 && !isHistoricalMode) {
+            allData = json.data;
             liveCacheData = json.data;
-            if (currentMemoryDate === 'live') {
-                allData = json.data;
-            }
-            // Save client-side rolling memory backup
-            saveClientMemoryBackup(json.data, json.last_updated);
         }
-        if (json.last_updated && currentMemoryDate === 'live') {
+        if (json.last_updated && !isHistoricalMode) {
             document.getElementById('lastUpdated').textContent = '🕐 ' + json.last_updated;
         }
         // Source indicator
         const dot = document.getElementById('liveDot');
         const label = document.getElementById('sourceLabel');
-        if (currentMemoryDate !== 'live') {
-            dot.className = 'live-dot sample';
-            label.innerHTML = `<span style="color:#d97706; font-weight:600;">📅 Memory: ${currentMemoryDate}</span>`;
-        } else if (isLiveMode) {
-            dot.className = 'live-dot';
-            label.innerHTML = '<span style="color:#d93025; font-weight:700;">⚡ LIVE (2s)</span>';
-        } else if (json.source === 'live') {
-            dot.className = 'live-dot';
-            label.textContent = 'Live';
-        } else {
-            dot.className = 'live-dot sample';
-            label.textContent = 'Sample Data';
+        if (!isHistoricalMode) {
+            if (isLiveMode) {
+                dot.className = 'live-dot';
+                label.innerHTML = '<span style="color:#d93025; font-weight:700;">⚡ LIVE (2s)</span>';
+            } else if (json.source === 'live') {
+                dot.className = 'live-dot';
+                label.textContent = 'Live';
+            } else {
+                dot.className = 'live-dot sample';
+                label.textContent = 'Sample Data';
+            }
         }
         // Banner
-        if (json.error && !isLiveMode && currentMemoryDate === 'live') {
+        if (json.error && !isLiveMode && !isHistoricalMode) {
             showBanner('warn', json.error);
-        } else if (!json.error && currentMemoryDate === 'live') {
+        } else if (!json.error && !isHistoricalMode) {
             closeBanner();
         }
 
-        applyFilters();
-        if (!isLiveMode) {
-            resetCountdown();
-        }
-        // Update history tabs dynamically if today changed
-        loadHistoryDates();
+        if (!isHistoricalMode) applyFilters();
+        if (!isLiveMode) resetCountdown();
+
     } catch (err) {
-        if (!silent) {
-            showBanner('error', 'Network error: ' + err.message);
-        }
+        if (!silent) showBanner('error', 'Network error: ' + err.message);
     } finally {
         isRequestInFlight = false;
-        if (!silent) {
-            showLoading(false);
-        }
+        if (!silent) showLoading(false);
     }
 }
 
@@ -851,107 +829,36 @@ function toggleTop10() {
     applyFilters();
 }
 
-// ── 5-Day Memory History Manager ───────────────────────────────────────
-async function loadHistoryDates() {
-    try {
-        const resp = await fetch('/api/history');
-        const json = await resp.json();
-        availableHistoryDates = json.dates || [];
-    } catch (e) {
-        // Fallback to client localStorage history
-        availableHistoryDates = getClientMemoryDates();
-    }
-    renderMemoryTabs();
-}
-
-function renderMemoryTabs() {
-    const tabsContainer = document.getElementById('memoryTabs');
-    const liveActive = currentMemoryDate === 'live' ? 'active' : '';
-
-    let html = `
-        <button class="memory-tab ${liveActive}" id="tabLive" onclick="selectMemoryDate('live')" data-tooltip="Switch to real-time live market stream">
-            <span class="live-dot-mini"></span> Live (Today)
-        </button>
-    `;
-
-    availableHistoryDates.forEach(item => {
-        const d = item.date;
-        const label = item.label || d;
-        const active = currentMemoryDate === d ? 'active' : '';
-        html += `
-            <button class="memory-tab ${active}" onclick="selectMemoryDate('${d}')" data-tooltip="View archived data for ${label}">
-                📅 ${label}
-            </button>
-        `;
-    });
-
-    tabsContainer.innerHTML = html;
-}
-
-async function selectMemoryDate(dateStr) {
-    currentMemoryDate = dateStr;
-    const badge = document.getElementById('memoryBadge');
-    const refreshBtn = document.getElementById('refreshBtn');
-
-    renderMemoryTabs();
-
-    if (dateStr === 'live') {
-        isHistoricalMode = false;
-        badge.style.display = 'none';
-        badge.className = 'memory-badge'; // Reset to default styling
-        refreshBtn.disabled = false;
-        refreshBtn.style.opacity = '1';
-        allData = liveCacheData.length > 0 ? liveCacheData : allData;
-        showBanner('info', 'Switched to Live Market Stream.');
-        setTimeout(closeBanner, 2500);
-        refreshData();
-    } else {
-        // Pauses live timer while inspecting past memory
-        isHistoricalMode = false;
-        if (isLiveMode) {
-            toggleLive(); // Turn off live stream
-        }
-        stopAutoRefresh();
-        refreshBtn.disabled = true;
-        refreshBtn.style.opacity = '0.5';
-
-        badge.className = 'memory-badge'; // Reset from historical-badge if needed
-        badge.style.display = 'inline-block';
-        badge.textContent = `Viewing Memory: ${dateStr}`;
-
-        showLoading(true);
-        try {
-            const resp = await fetch(`/api/history/${dateStr}`);
-            const json = await resp.json();
-            if (json.data && json.data.length > 0) {
-                allData = json.data;
-                document.getElementById('lastUpdated').textContent = `📅 Memory: ${json.timestamp || dateStr}`;
-                showBanner('info', `📅 Displaying archived snapshot for ${json.label || dateStr} (${json.count || json.data.length} stocks)`);
-            } else {
-                // Fallback to client localStorage
-                const localSnap = getClientMemorySnapshot(dateStr);
-                if (localSnap && localSnap.length > 0) {
-                    allData = localSnap;
-                    showBanner('info', `📅 Displaying local memory snapshot for ${dateStr}`);
-                }
-            }
-        } catch (e) {
-            const localSnap = getClientMemorySnapshot(dateStr);
-            if (localSnap && localSnap.length > 0) {
-                allData = localSnap;
-            }
-        } finally {
-            showLoading(false);
-            applyFilters();
-        }
-    }
-}
-
 // ── Calendar: Past Date Picker (Real NSE Bhavcopy Archive) ─────────────
 function onCalendarDateChange() {
-    const picker = document.getElementById('historicalDatePicker');
     const btn = document.getElementById('calendarFetchBtn');
-    btn.disabled = !picker.value;
+    btn.disabled = !document.getElementById('historicalDatePicker').value;
+}
+
+// Switch back to live market data from historical view
+function backToLive() {
+    if (!isHistoricalMode) return;
+    isHistoricalMode = false;
+
+    // Restore Live tab button styling
+    const liveBtn = document.getElementById('tabLive');
+    liveBtn.classList.add('active');
+
+    // Clear badge
+    const badge = document.getElementById('memoryBadge');
+    badge.style.display = 'none';
+    badge.className = 'memory-badge';
+
+    // Re-enable refresh
+    const refreshBtn = document.getElementById('refreshBtn');
+    refreshBtn.disabled = false;
+    refreshBtn.style.opacity = '1';
+
+    // Restore live data
+    allData = liveCacheData.length > 0 ? liveCacheData : allData;
+    showBanner('info', 'Switched back to Live Market Stream.');
+    setTimeout(closeBanner, 2500);
+    refreshData();
 }
 
 async function fetchHistoricalDate() {
@@ -961,25 +868,24 @@ async function fetchHistoricalDate() {
 
     const btn = document.getElementById('calendarFetchBtn');
 
-    // Stop live mode and auto-refresh
+    // Stop live mode and auto-refresh first
     if (isLiveMode) toggleLive();
     stopAutoRefresh();
 
-    // Set UI to loading state
+    // Loading state
     btn.classList.add('loading');
     btn.disabled = true;
     isHistoricalMode = true;
-    currentMemoryDate = dateStr;
 
-    // Un-highlight all memory tabs
-    renderMemoryTabs();
+    // Un-highlight Live tab
+    document.getElementById('tabLive').classList.remove('active');
 
-    // Show loading overlay with message
+    // Show loading overlay
     document.getElementById('loadingOverlay').classList.add('active');
     document.querySelector('#loadingOverlay p').textContent =
         'Fetching official NSE Bhavcopy archive... This may take 10-20 seconds.';
 
-    // Disable refresh button
+    // Disable refresh button while fetching
     const refreshBtn = document.getElementById('refreshBtn');
     refreshBtn.disabled = true;
     refreshBtn.style.opacity = '0.5';
@@ -989,26 +895,21 @@ async function fetchHistoricalDate() {
         const json = await resp.json();
 
         if (!resp.ok || json.error) {
-            const errMsg = json.error || `Failed to fetch data for ${dateStr}`;
-            showBanner('error', `❌ ${errMsg}`);
-            // Reset state
+            showBanner('error', `❌ ${json.error || 'Failed to fetch data for ' + dateStr}`);
             isHistoricalMode = false;
-            currentMemoryDate = 'live';
-            renderMemoryTabs();
+            document.getElementById('tabLive').classList.add('active');
             return;
         }
 
         if (!json.data || json.data.length === 0) {
-            showBanner('warn', `No futures data found for ${json.label || dateStr}. This may be a market holiday.`);
+            showBanner('warn', `No futures data for ${json.label || dateStr}. This may be a market holiday.`);
             isHistoricalMode = false;
-            currentMemoryDate = 'live';
-            renderMemoryTabs();
+            document.getElementById('tabLive').classList.add('active');
             return;
         }
 
-        // Successfully loaded
+        // Successfully loaded historical data
         allData = json.data;
-
         const label = json.label || dateStr;
         const weekday = json.weekday || '';
         const count = json.count || json.data.length;
@@ -1016,26 +917,23 @@ async function fetchHistoricalDate() {
         document.getElementById('lastUpdated').textContent = `📆 ${label} (${weekday}) — NSE Archive`;
 
         // Source indicator
-        const dot = document.getElementById('liveDot');
-        const srcLabel = document.getElementById('sourceLabel');
-        dot.className = 'live-dot sample';
-        srcLabel.innerHTML = `<span style="color:#7627d2; font-weight:600;">📆 NSE Archive: ${label}</span>`;
+        document.getElementById('liveDot').className = 'live-dot sample';
+        document.getElementById('sourceLabel').innerHTML =
+            `<span style="color:#7627d2; font-weight:600;">📆 NSE Archive: ${label}</span>`;
 
-        // Show purple historical badge in memory bar
+        // Show purple badge
         const badge = document.getElementById('memoryBadge');
         badge.style.display = 'inline-flex';
         badge.className = 'historical-badge';
-        badge.innerHTML = `📆 NSE Bhavcopy Archive &mdash; ${label} &mdash; ${count} symbols`;
+        badge.innerHTML = `📆 ${label} (${weekday}) — ${count} F&O symbols &nbsp;·&nbsp; <span style="cursor:pointer;text-decoration:underline;" onclick="backToLive()">← Back to Live</span>`;
 
-        showBanner('info', `📆 Loaded real NSE Bhavcopy data for ${label} (${weekday}). ${count} F&O symbols. Source: NSE archives.`);
-
+        showBanner('info', `📆 Loaded real NSE Bhavcopy data for ${label} (${weekday}). ${count} F&O symbols. Click "Live (Today)" to return.`);
         applyFilters();
 
     } catch (err) {
-        showBanner('error', `Network error: ${err.message}. Check your internet connection.`);
+        showBanner('error', `Network error: ${err.message}`);
         isHistoricalMode = false;
-        currentMemoryDate = 'live';
-        renderMemoryTabs();
+        document.getElementById('tabLive').classList.add('active');
     } finally {
         btn.classList.remove('loading');
         btn.disabled = false;
@@ -1046,59 +944,12 @@ async function fetchHistoricalDate() {
     }
 }
 
-// ── Client-side 5-Day Memory Backup & Auto-Pruning ─────────────────────
-function saveClientMemoryBackup(rows, timestamp) {
-    if (!rows || rows.length === 0) return;
-    try {
-        const todayStr = new Date().toISOString().slice(0, 10);
-        const todayLabel = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-        
-        let clientHistory = JSON.parse(localStorage.getItem('nse_oi_history') || '{"dates":[],"snapshots":{}}');
-        clientHistory.snapshots[todayStr] = {
-            date: todayStr,
-            label: todayLabel,
-            timestamp: timestamp || todayLabel,
-            data: rows
-        };
 
-        if (!clientHistory.dates.includes(todayStr)) {
-            clientHistory.dates.unshift(todayStr);
-        }
-        clientHistory.dates = [...new Set(clientHistory.dates)].sort().reverse();
-
-        // 5-DAY ROLLING PRUNING: Automatically delete days beyond 5
-        if (clientHistory.dates.length > 5) {
-            const toDelete = clientHistory.dates.slice(5);
-            toDelete.forEach(d => delete clientHistory.snapshots[d]);
-            clientHistory.dates = clientHistory.dates.slice(0, 5);
-        }
-
-        localStorage.setItem('nse_oi_history', JSON.stringify(clientHistory));
-    } catch (_) {}
-}
-
-function getClientMemoryDates() {
-    try {
-        const clientHistory = JSON.parse(localStorage.getItem('nse_oi_history') || '{"dates":[],"snapshots":{}}');
-        return clientHistory.dates.map(d => ({
-            date: d,
-            label: (clientHistory.snapshots[d] && clientHistory.snapshots[d].label) || d,
-            timestamp: (clientHistory.snapshots[d] && clientHistory.snapshots[d].timestamp) || d
-        }));
-    } catch (_) { return []; }
-}
-
-function getClientMemorySnapshot(dateStr) {
-    try {
-        const clientHistory = JSON.parse(localStorage.getItem('nse_oi_history') || '{"dates":[],"snapshots":{}}');
-        return (clientHistory.snapshots[dateStr] && clientHistory.snapshots[dateStr].data) || null;
-    } catch (_) { return null; }
-}
 
 // ── Live Mode Toggle ───────────────────────────────────────────────────
 function toggleLive() {
-    if (currentMemoryDate !== 'live') {
-        selectMemoryDate('live');
+    if (isHistoricalMode) {
+        backToLive();
     }
     isLiveMode = !isLiveMode;
     const btn = document.getElementById('liveBtn');
@@ -1116,7 +967,7 @@ function toggleLive() {
         // Start 2-second interval
         if (liveIntervalTimer) clearInterval(liveIntervalTimer);
         liveIntervalTimer = setInterval(() => {
-            if (isLiveMode && currentMemoryDate === 'live') {
+            if (isLiveMode && !isHistoricalMode) {
                 refreshData(true);
             }
         }, 2000);
@@ -1357,7 +1208,9 @@ function downloadCSV() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    const dateLabel = currentMemoryDate === 'live' ? new Date().toISOString().slice(0,10) : currentMemoryDate;
+    const dateLabel = isHistoricalMode && document.getElementById('historicalDatePicker').value
+        ? document.getElementById('historicalDatePicker').value
+        : new Date().toISOString().slice(0, 10);
     a.download = `NSE_OI_Spurts_${dateLabel}.csv`;
     a.click();
     URL.revokeObjectURL(url);
