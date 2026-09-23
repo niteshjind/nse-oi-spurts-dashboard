@@ -651,8 +651,8 @@
                id="historicalDatePicker"
                class="calendar-picker-input"
                max=""
-               min="2000-01-01"
-               title="Select any past trading date to view official NSE Bhavcopy data"
+               min=""
+               title="Select a past trading date (up to 6 months back) to view official NSE Bhavcopy data"
                onchange="onCalendarDateChange()">
         <button class="calendar-fetch-btn" id="calendarFetchBtn" onclick="fetchHistoricalDate()" disabled>
             <span class="calendar-spinner"></span>
@@ -742,18 +742,26 @@ let isHistoricalMode = false;  // true when viewing NSE Bhavcopy archive data
 document.addEventListener('DOMContentLoaded', () => {
     refreshData();
     loadHistoryDates();
-    // Set calendar max date to yesterday (today's data comes from Live tab)
+    // Set calendar date constraints:
+    // - max = yesterday (today uses Live tab)
+    // - min = 6 months ago (NSE only maintains recent archive)
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
-    // Also skip to last weekday if yesterday is weekend
+    // Skip weekends for yesterday
     while (yesterday.getDay() === 0 || yesterday.getDay() === 6) {
         yesterday.setDate(yesterday.getDate() - 1);
     }
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setDate(sixMonthsAgo.getDate() - 183);
+
     const maxDateStr = yesterday.toISOString().slice(0, 10);
+    const minDateStr = sixMonthsAgo.toISOString().slice(0, 10);
+
     const picker = document.getElementById('historicalDatePicker');
     picker.max = maxDateStr;
-    picker.value = maxDateStr; // Pre-fill with last trading day
-    // Enable button since we pre-filled a date
+    picker.min = minDateStr;
+    picker.value = maxDateStr; // Pre-fill with last weekday
+    // Enable button since we pre-filled
     document.getElementById('calendarFetchBtn').disabled = false;
     // Keyboard nav
     document.addEventListener('keydown', handleKey);
