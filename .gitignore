@@ -8,3 +8,6 @@ env/
 venv/
 *.log
 .DS_Store
+*.db
+history_data.json
+screener_extracted/

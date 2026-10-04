@@ -1174,12 +1174,26 @@
                         Tracks JdK RS-Ratio & RS-Momentum rotation across 20 macro industries relative to NIFTY 500
                     </div>
                 </div>
-                <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                    <span class="screener-filter-pill active" onclick="filterSectors('all', this)">All (20)</span>
-                    <span class="screener-filter-pill" onclick="filterSectors('Leading', this)">🟢 Leading</span>
-                    <span class="screener-filter-pill" onclick="filterSectors('Improving', this)">🔵 Improving</span>
-                    <span class="screener-filter-pill" onclick="filterSectors('Weakening', this)">🟡 Weakening</span>
-                    <span class="screener-filter-pill" onclick="filterSectors('Lagging', this)">🔴 Lagging</span>
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                    <div style="display:flex;align-items:center;gap:4px;font-size:12px;color:#5f6368;">
+                        <span>Timeframe:</span>
+                        <select id="screenerTimeframeSelect" onchange="onScreenerTimeframeChange()"
+                                style="border:1px solid #dadce0;border-radius:4px;padding:3px 6px;font-size:12px;outline:none;background:#fff;cursor:pointer;">
+                            <option value="weekly" selected>Weekly (Default)</option>
+                            <option value="monthly">Monthly</option>
+                            <option value="quarterly">Quarterly</option>
+                        </select>
+                    </div>
+                    <button class="calendar-fetch-btn" id="screenerRefreshBtn" onclick="fetchLiveScreenerData(true)" style="height:26px;font-size:11px;" title="Recompute with latest institutional engine data">
+                        <span>🔄 Recalculate</span>
+                    </button>
+                    <div style="display:flex;gap:5px;flex-wrap:wrap;margin-left:6px;">
+                        <span class="screener-filter-pill active" onclick="filterSectors('all', this)">All</span>
+                        <span class="screener-filter-pill" onclick="filterSectors('Leading', this)">🟢 Leading</span>
+                        <span class="screener-filter-pill" onclick="filterSectors('Improving', this)">🔵 Improving</span>
+                        <span class="screener-filter-pill" onclick="filterSectors('Weakening', this)">🟡 Weakening</span>
+                        <span class="screener-filter-pill" onclick="filterSectors('Lagging', this)">🔴 Lagging</span>
+                    </div>
                 </div>
             </div>
 
@@ -1193,7 +1207,9 @@
                             <th>RS-Ratio</th>
                             <th>RS-Momentum</th>
                             <th>Breadth (>200 DMA)</th>
+                            <th>Breadth (>50 DMA)</th>
                             <th>Constituents</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody id="sectorsTableBody">
@@ -1208,22 +1224,27 @@
             <div class="screener-card-header">
                 <div>
                     <div class="screener-card-title">
-                        <span>🏆 Relative Strength & Trend Leaderboard</span>
+                        <span>🏆 All 500 Nifty & F&O Stocks Leaderboard</span>
+                        <span id="screenerActiveSectorBadge" style="display:none;background:#e8f0fe;color:#1967d2;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;margin-left:8px;"></span>
                     </div>
                     <div class="screener-card-subtitle">
-                        Ranked by Composite Score (0-100) combining RRG + RS Percentile + 200-DMA Trend Filter + Breadth
+                        Showing all stocks ranked by Institutional Composite Score (0-100) combining RRG + Multi-Period RS + 200-DMA Trend Filter + Breadth
                     </div>
                 </div>
                 <div style="display:flex;gap:8px;align-items:center;">
-                    <input type="text" id="screenerStockSearch" placeholder="Search stock or sector..."
+                    <button class="screener-filter-pill" id="clearSectorFilterBtn" onclick="clearSectorFilter()" style="display:none;color:#ea4335;border-color:#fad2cf;">
+                        ✕ Clear Sector Filter
+                    </button>
+                    <input type="text" id="screenerStockSearch" placeholder="Search any stock or sector (e.g. RELIANCE, Auto)..."
                            oninput="renderScreenerStocksTable()"
-                           style="border:1px solid #dadce0;border-radius:4px;padding:4px 8px;font-size:12px;outline:none;">
+                           style="border:1px solid #dadce0;border-radius:4px;padding:5px 10px;font-size:12px;width:260px;outline:none;">
+                    <span id="screenerStockCountBadge" style="font-size:11px;font-weight:700;color:#5f6368;background:#f1f3f4;padding:4px 8px;border-radius:4px;">0 Stocks</span>
                 </div>
             </div>
 
-            <div style="overflow-x:auto;">
+            <div style="overflow-x:auto;max-height:550px;overflow-y:auto;">
                 <table class="screener-table" id="stocksTable">
-                    <thead>
+                    <thead style="position:sticky;top:0;background:#f1f3f4;z-index:2;">
                         <tr>
                             <th>#</th>
                             <th>Symbol</th>
@@ -1310,18 +1331,64 @@ const SCREENER_SECTORS_DATA = [
     { name: "Chemicals & Petrochemicals", quadrant: "Lagging", status: "Decelerating", rs_ratio: 95.9, rs_mom: 97.2, breadth_200: 38.5, count: 30 }
 ];
 
-const SCREENER_STOCKS_DATA = [
-    { symbol: "M&M", sector: "Automobile & Components", score: 94.5, quadrant: "Leading", above_200: true, pct_dma: 14.2, rs_pct: 98 },
-    { symbol: "TATACHEM", sector: "Chemicals & Petrochemicals", score: 91.2, quadrant: "Improving", above_200: true, pct_dma: 11.5, rs_pct: 94 },
-    { symbol: "BHARTIARTL", sector: "Telecommunication", score: 89.8, quadrant: "Leading", above_200: true, pct_dma: 12.8, rs_pct: 92 },
-    { symbol: "HAL", sector: "Capital Goods & Defense", score: 88.4, quadrant: "Leading", above_200: true, pct_dma: 18.4, rs_pct: 95 },
-    { symbol: "ICICIBANK", sector: "Financial Services", score: 86.2, quadrant: "Leading", above_200: true, pct_dma: 8.7, rs_pct: 88 },
-    { symbol: "SUNPHARMA", sector: "Healthcare & Pharmaceuticals", score: 84.0, quadrant: "Improving", above_200: true, pct_dma: 9.3, rs_pct: 85 },
-    { symbol: "NTPC", sector: "Power & Renewable Energy", score: 82.5, quadrant: "Improving", above_200: true, pct_dma: 7.6, rs_pct: 83 },
-    { symbol: "ITC", sector: "FMCG", score: 68.2, quadrant: "Weakening", above_200: true, pct_dma: 3.4, rs_pct: 65 },
-    { symbol: "TCS", sector: "Information Technology", score: 54.1, quadrant: "Lagging", above_200: false, pct_dma: -4.2, rs_pct: 42 },
-    { symbol: "TATASTEEL", sector: "Metals & Mining", score: 48.6, quadrant: "Lagging", above_200: false, pct_dma: -6.8, rs_pct: 35 }
-];
+// ── Dynamic Market Move Screener Engine Client ───────────────────────
+let screenerSectors = [];
+let screenerStocks = [];
+let selectedSectorDrilldown = null;
+let isScreenerLoading = false;
+
+async function fetchLiveScreenerData(forceRefresh = false) {
+    if (isScreenerLoading) return;
+    isScreenerLoading = true;
+    
+    const refreshBtn = document.getElementById('screenerRefreshBtn');
+    if (refreshBtn) {
+        refreshBtn.classList.add('loading');
+        refreshBtn.disabled = true;
+    }
+
+    const tf = document.getElementById('screenerTimeframeSelect')?.value || 'weekly';
+
+    try {
+        const resp = await fetch(`/api/screener/data?timeframe=${tf}&refresh=${forceRefresh}`);
+        const json = await resp.json();
+
+        if (json.success) {
+            screenerSectors = json.sectors || [];
+            screenerStocks = json.stocks || [];
+
+            // Update Metrics summary
+            const topSec = screenerSectors.find(s => s.quadrant === 'Leading');
+            if (topSec && document.getElementById('screenerTopSector')) {
+                document.getElementById('screenerTopSector').textContent = `${topSec.sector} 🟢`;
+            }
+            if (screenerSectors.length > 0 && document.getElementById('screenerBreadthVal')) {
+                const avgBreadth = screenerSectors.reduce((sum, s) => sum + (s.breadth_200 || 0), 0) / screenerSectors.length;
+                document.getElementById('screenerBreadthVal').textContent = `${avgBreadth.toFixed(1)}%`;
+            }
+            if (document.getElementById('screenerSectorsCount')) {
+                document.getElementById('screenerSectorsCount').textContent = `${screenerSectors.length} Sectors`;
+            }
+
+            renderScreenerSectorsTable();
+            renderScreenerStocksTable();
+        } else {
+            console.error("Screener fetch failed:", json.error);
+        }
+    } catch (err) {
+        console.error("Error fetching screener data:", err);
+    } finally {
+        isScreenerLoading = false;
+        if (refreshBtn) {
+            refreshBtn.classList.remove('loading');
+            refreshBtn.disabled = false;
+        }
+    }
+}
+
+function onScreenerTimeframeChange() {
+    fetchLiveScreenerData(false);
+}
 
 function filterSectors(quadrant, el) {
     currentSectorFilter = quadrant;
@@ -1330,25 +1397,67 @@ function filterSectors(quadrant, el) {
     renderScreenerSectorsTable();
 }
 
+function drilldownSector(sectorName) {
+    selectedSectorDrilldown = sectorName;
+    const badge = document.getElementById('screenerActiveSectorBadge');
+    const clearBtn = document.getElementById('clearSectorFilterBtn');
+    if (badge) {
+        badge.style.display = 'inline-block';
+        badge.textContent = `Filtered by Sector: ${sectorName}`;
+    }
+    if (clearBtn) {
+        clearBtn.style.display = 'inline-block';
+    }
+    renderScreenerStocksTable();
+}
+
+function clearSectorFilter() {
+    selectedSectorDrilldown = null;
+    const badge = document.getElementById('screenerActiveSectorBadge');
+    const clearBtn = document.getElementById('clearSectorFilterBtn');
+    if (badge) badge.style.display = 'none';
+    if (clearBtn) clearBtn.style.display = 'none';
+    renderScreenerStocksTable();
+}
+
 function renderScreenerSectorsTable() {
     const tbody = document.getElementById('sectorsTableBody');
     if (!tbody) return;
 
-    let rows = SCREENER_SECTORS_DATA;
+    let rows = screenerSectors;
     if (currentSectorFilter !== 'all') {
-        rows = rows.filter(r => r.quadrant.toLowerCase() === currentSectorFilter.toLowerCase());
+        rows = rows.filter(r => (r.quadrant || '').toLowerCase() === currentSectorFilter.toLowerCase());
+    }
+
+    if (rows.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:24px;color:#70757a;">
+            ${isScreenerLoading ? 'Calculating live sector rotations from institutional cache...' : 'No sectors matching filter.'}
+        </td></tr>`;
+        return;
     }
 
     tbody.innerHTML = rows.map(r => {
-        const qLower = r.quadrant.toLowerCase();
+        const qLower = (r.quadrant || 'N/A').toLowerCase();
+        const breadth200 = r.breadth_200 !== undefined && r.breadth_200 !== null ? r.breadth_200.toFixed(1) + '%' : '—';
+        const breadth50 = r.breadth_50 !== undefined && r.breadth_50 !== null ? r.breadth_50.toFixed(1) + '%' : '—';
+        const rsRatio = r.rs_ratio !== undefined && r.rs_ratio !== null ? r.rs_ratio.toFixed(1) : '—';
+        const rsMom = r.rs_momentum !== undefined && r.rs_momentum !== null ? r.rs_momentum.toFixed(1) : '—';
+        const count = r.n_total || r.n_cached || 0;
+
         return `<tr>
-            <td style="font-weight:600;">${r.name}</td>
-            <td><span class="badge-quadrant ${qLower}">${r.quadrant}</span></td>
-            <td style="color:#5f6368;">${r.status}</td>
-            <td><b>${r.rs_ratio.toFixed(1)}</b></td>
-            <td><b>${r.rs_mom.toFixed(1)}</b></td>
-            <td><span style="color:#137333;font-weight:600;">${r.breadth_200.toFixed(1)}%</span></td>
-            <td style="color:#70757a;">${r.count} stocks</td>
+            <td style="font-weight:700;color:#202124;">${esc(r.sector)}</td>
+            <td><span class="badge-quadrant ${qLower}">${r.quadrant || 'N/A'}</span></td>
+            <td style="color:#5f6368;text-transform:capitalize;">${r.direction || '—'}</td>
+            <td><b>${rsRatio}</b></td>
+            <td><b>${rsMom}</b></td>
+            <td><span style="color:#137333;font-weight:600;">${breadth200}</span></td>
+            <td><span style="color:#1a73e8;font-weight:600;">${breadth50}</span></td>
+            <td style="color:#70757a;">${count} stocks</td>
+            <td>
+                <button class="screener-filter-pill" onclick="drilldownSector('${r.sector.replace(/'/g, "\\'")}')" style="padding:2px 8px;font-size:11px;">
+                    🔍 View Stocks
+                </button>
+            </td>
         </tr>`;
     }).join('');
 }
@@ -1358,27 +1467,49 @@ function renderScreenerStocksTable() {
     if (!tbody) return;
 
     const query = (document.getElementById('screenerStockSearch')?.value || '').toLowerCase().trim();
-    let rows = SCREENER_STOCKS_DATA;
+    let rows = screenerStocks;
+
+    // Filter by sector drilldown
+    if (selectedSectorDrilldown) {
+        rows = rows.filter(r => (r.sector || '').toLowerCase() === selectedSectorDrilldown.toLowerCase());
+    }
+
+    // Filter by search query
     if (query) {
-        rows = rows.filter(r => r.symbol.toLowerCase().includes(query) || r.sector.toLowerCase().includes(query));
+        rows = rows.filter(r => (r.symbol || '').toLowerCase().includes(query) || (r.sector || '').toLowerCase().includes(query));
+    }
+
+    const countBadge = document.getElementById('screenerStockCountBadge');
+    if (countBadge) {
+        countBadge.textContent = `${rows.length} Stocks`;
+    }
+
+    if (rows.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:28px;color:#70757a;">
+            ${isScreenerLoading ? 'Computing full universe scores...' : 'No stocks matching filter.'}
+        </td></tr>`;
+        return;
     }
 
     tbody.innerHTML = rows.map((r, i) => {
-        const qLower = r.quadrant.toLowerCase();
-        const scoreCls = r.score >= 80 ? 'score-high' : r.score >= 60 ? 'score-med' : 'score-low';
-        const trendBadge = r.above_200 
+        const qLower = (r.quadrant || 'N/A').toLowerCase();
+        const score = r.rotation_score !== undefined && r.rotation_score !== null ? r.rotation_score : 50;
+        const scoreCls = score >= 80 ? 'score-high' : score >= 60 ? 'score-med' : 'score-low';
+        const trendBadge = r.above_200dma 
             ? '<span style="color:#137333;font-weight:600;">▲ Bullish (Above)</span>' 
             : '<span style="color:#c5221f;font-weight:600;">▼ Bearish (Below)</span>';
+        const pctDma = r.pct_from_dma !== undefined && r.pct_from_dma !== null ? r.pct_from_dma.toFixed(1) : 0;
+        const rsPct = r.rs_percentile !== undefined && r.rs_percentile !== null ? Math.round(r.rs_percentile) : '—';
 
         return `<tr>
             <td style="color:#70757a;">${i + 1}</td>
-            <td style="font-weight:700;color:#1a73e8;">${r.symbol}</td>
-            <td style="color:#5f6368;">${r.sector}</td>
-            <td><span class="score-pill ${scoreCls}">${r.score}</span></td>
-            <td><span class="badge-quadrant ${qLower}">${r.quadrant}</span></td>
+            <td style="font-weight:700;color:#1a73e8;font-size:13px;">${esc(r.symbol)}</td>
+            <td style="color:#5f6368;">${esc(r.sector)}</td>
+            <td><span class="score-pill ${scoreCls}">${score}</span></td>
+            <td><span class="badge-quadrant ${qLower}">${r.quadrant || 'N/A'}</span></td>
             <td>${trendBadge}</td>
-            <td style="font-weight:600;color:${r.pct_dma >= 0 ? '#137333' : '#c5221f'};">${r.pct_dma > 0 ? '+' : ''}${r.pct_dma}%</td>
-            <td><b>${r.rs_pct}th</b></td>
+            <td style="font-weight:600;color:${pctDma >= 0 ? '#137333' : '#c5221f'};">${pctDma > 0 ? '+' : ''}${pctDma}%</td>
+            <td><b>${rsPct}${rsPct !== '—' ? 'th' : ''}</b></td>
         </tr>`;
     }).join('');
 }
@@ -1387,8 +1518,7 @@ function renderScreenerStocksTable() {
 document.addEventListener('DOMContentLoaded', () => {
     refreshData();
     initHeatmapCalendar();
-    renderScreenerSectorsTable();
-    renderScreenerStocksTable();
+    fetchLiveScreenerData(false);
     document.addEventListener('keydown', handleKey);
 });
 

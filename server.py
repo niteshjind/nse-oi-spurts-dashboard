@@ -15,7 +15,7 @@ import time
 import zipfile
 from datetime import datetime, timedelta
 import requests
-from flask import Flask, jsonify, render_template
+from flask import Flask, jsonify, render_template, request
 
 # Setup template path to work across local and Vercel serverless environments
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -376,6 +376,70 @@ def get_historical_bhavcopy(date_str):
     except Exception as exc:
         print(f"[Historical Route Error]: {exc}")
         return jsonify({"error": f"Failed to fetch historical data: {str(exc)}"}), 500
+
+
+# ---------------------------------------------------------------------------
+# Market Move Screener Routes & Cached Computations
+# ---------------------------------------------------------------------------
+import sys
+screener_dir = os.path.join(BASE_DIR, "screener_module")
+if screener_dir not in sys.path:
+    sys.path.insert(0, screener_dir)
+
+import screener_core as screener_engine
+
+_screener_cache = {
+    "sectors": [],
+    "stocks": [],
+    "timeframe": "weekly",
+    "updated_at": 0,
+}
+_screener_lock = threading.Lock()
+
+
+def _get_screener_data(timeframe="weekly", force_refresh=False):
+    """Compute and cache screener sectors & all stocks."""
+    now = time.time()
+    with _screener_lock:
+        if not force_refresh and _screener_cache["stocks"] and (now - _screener_cache["updated_at"] < 3600):
+            return _screener_cache
+
+        print(f"[Screener] Computing real Market Move Screener ({timeframe})...")
+        sectors_rows, _ = screener_engine.compute_sectors(timeframe=timeframe)
+        all_stocks = []
+        for sec in screener_engine.SECTORS:
+            stocks_rows, _ = screener_engine.compute_sector_stocks(sec, timeframe=timeframe)
+            if stocks_rows:
+                all_stocks.extend(stocks_rows)
+
+        all_stocks.sort(key=lambda x: x.get("rotation_score", 0), reverse=True)
+
+        _screener_cache["sectors"] = sectors_rows
+        _screener_cache["stocks"] = all_stocks
+        _screener_cache["timeframe"] = timeframe
+        _screener_cache["updated_at"] = now
+        print(f"[Screener] Finished computing: {len(sectors_rows)} sectors, {len(all_stocks)} stocks.")
+        return _screener_cache
+
+
+@app.route("/api/screener/data")
+def api_screener_data():
+    """Returns all 20 sectors and all 500 stocks computed by the institutional engine."""
+    timeframe = request.args.get("timeframe", "weekly")
+    refresh = request.args.get("refresh", "false").lower() == "true"
+    try:
+        data = _get_screener_data(timeframe=timeframe, force_refresh=refresh)
+        return jsonify({
+            "success": True,
+            "sectors": data["sectors"],
+            "stocks": data["stocks"],
+            "total_sectors": len(data["sectors"]),
+            "total_stocks": len(data["stocks"]),
+            "timeframe": data["timeframe"],
+        })
+    except Exception as exc:
+        print(f"[Screener API Error]: {exc}")
+        return jsonify({"success": False, "error": str(exc)}), 500
 
 
 # ---------------------------------------------------------------------------
