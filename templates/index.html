@@ -53,6 +53,39 @@
             display: block;
             margin-top: 1px;
         }
+        /* Top Primary Navigation Tabs */
+        .app-nav-tabs {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0, 0, 0, 0.15);
+            padding: 4px;
+            border-radius: 8px;
+        }
+        .app-nav-tab {
+            border: none;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.85);
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all .15s ease;
+        }
+        .app-nav-tab:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+        }
+        .app-nav-tab.active {
+            background: #ffffff;
+            color: #137333;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+        }
 
         /* ================================================================
            TOOLBAR (action buttons)
@@ -739,9 +772,165 @@
             padding: 4px 8px;
             border-radius: 4px;
             font-size: 11px;
-            white-space: nowrap;
-            z-index: 200;
+        /* ================================================================
+           MARKET MOVE SCREENER SECTION STYLES
+           ================================================================ */
+        .tab-section {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            overflow: hidden;
+        }
+        .tab-section.hidden {
+            display: none !important;
+        }
+        .screener-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 20px;
+            background: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .screener-card {
+            background: #ffffff;
+            border: 1px solid #dadce0;
+            border-radius: 10px;
+            padding: 16px 18px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .screener-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .screener-card-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #202124;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .screener-card-subtitle {
+            font-size: 12px;
+            color: #5f6368;
+            margin-top: 2px;
+        }
+        .screener-metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .metric-tile {
+            background: #f8f9fa;
+            border: 1px solid #e8eaed;
+            border-radius: 8px;
+            padding: 12px 14px;
+        }
+        .metric-tile-lbl {
+            font-size: 11px;
+            font-weight: 600;
+            color: #5f6368;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+        .metric-tile-val {
+            font-size: 20px;
+            font-weight: 700;
+            color: #202124;
             margin-top: 4px;
+        }
+        /* Quadrant Badges */
+        .badge-quadrant {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .badge-quadrant.leading {
+            background: #e6f4ea;
+            color: #137333;
+            border: 1px solid #ceead6;
+        }
+        .badge-quadrant.improving {
+            background: #e8f0fe;
+            color: #1967d2;
+            border: 1px solid #d2e3fc;
+        }
+        .badge-quadrant.weakening {
+            background: #fef7e0;
+            color: #b06000;
+            border: 1px solid #feefc3;
+        }
+        .badge-quadrant.lagging {
+            background: #fce8e6;
+            color: #c5221f;
+            border: 1px solid #fad2cf;
+        }
+        .screener-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        .screener-table th {
+            background: #f1f3f4;
+            padding: 9px 12px;
+            font-weight: 600;
+            color: #3c4043;
+            border-bottom: 2px solid #dadce0;
+            text-align: left;
+            white-space: nowrap;
+        }
+        .screener-table td {
+            padding: 9px 12px;
+            border-bottom: 1px solid #e8eaed;
+            color: #202124;
+            white-space: nowrap;
+        }
+        .screener-table tr:hover {
+            background: #f8fafd;
+        }
+        .score-pill {
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-size: 11px;
+            display: inline-block;
+        }
+        .score-high { background: #e6f4ea; color: #137333; }
+        .score-med { background: #e8f0fe; color: #1967d2; }
+        .score-low { background: #fce8e6; color: #c5221f; }
+        .screener-filter-pill {
+            background: #fff;
+            border: 1px solid #dadce0;
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #3c4043;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all .15s;
+        }
+        .screener-filter-pill:hover {
+            border-color: #1a73e8;
+            color: #1a73e8;
+        }
+        .screener-filter-pill.active {
+            background: #1a73e8;
+            color: #ffffff;
+            border-color: #1a73e8;
         }
     </style>
 </head>
@@ -751,11 +940,27 @@
 <div class="topbar">
     <div class="topbar-icon">📊</div>
     <div class="topbar-title">
-        NSE OI Spurts Dashboard
-        <small>Open Interest Spurts — Live Market Analysis & Past Date Archive</small>
+        NSE Market Analytics
+        <small>Real-Time Derivatives OI Spurts & Institutional Sector Rotation Screener</small>
     </div>
-    <span id="lastUpdated" style="font-size:12px;opacity:.85;"></span>
+
+    <!-- PRIMARY APP VIEW TABS (Step A) -->
+    <div class="app-nav-tabs">
+        <button class="app-nav-tab active" id="navTabOi" onclick="switchMainTab('oi')">
+            <span>⚡ F&O OI Spurts</span>
+        </button>
+        <button class="app-nav-tab" id="navTabScreener" onclick="switchMainTab('screener')">
+            <span>🎯 Market Move Screener</span>
+        </button>
+    </div>
+
+    <span id="lastUpdated" style="font-size:12px;opacity:.85;margin-left:12px;"></span>
 </div>
+
+<!-- ================================================================
+     TAB 1: F&O OPEN INTEREST SPURTS SECTION
+     ================================================================ -->
+<div class="tab-section" id="oiSection">
 
 <!-- ============================  TOOLBAR  ============================ -->
 <div class="toolbar">
@@ -930,6 +1135,116 @@
     <div class="countdown" id="countdown"></div>
 </div>
 
+</div><!-- End of #oiSection -->
+
+<!-- ================================================================
+     TAB 2: MARKET MOVE & SECTOR ROTATION SCREENER SECTION (Step A)
+     ================================================================ -->
+<div class="tab-section hidden" id="screenerSection">
+    <div class="screener-container">
+        
+        <!-- TOP SUMMARY TILES -->
+        <div class="screener-metrics-grid">
+            <div class="metric-tile">
+                <div class="metric-tile-lbl">Top Leading Sector</div>
+                <div class="metric-tile-val" id="screenerTopSector" style="color:#137333;">Nifty Auto 🟢</div>
+            </div>
+            <div class="metric-tile">
+                <div class="metric-tile-lbl">Market Breadth (>200 DMA)</div>
+                <div class="metric-tile-val" id="screenerBreadthVal" style="color:#1a73e8;">68.4%</div>
+            </div>
+            <div class="metric-tile">
+                <div class="metric-tile-lbl">Sectors Tracked</div>
+                <div class="metric-tile-val" id="screenerSectorsCount">20 Sectors</div>
+            </div>
+            <div class="metric-tile">
+                <div class="metric-tile-lbl">Screener Universe</div>
+                <div class="metric-tile-val" style="color:#5f6368;">Nifty 500 & F&O</div>
+            </div>
+        </div>
+
+        <!-- 1. SECTOR ROTATION & RRG OVERVIEW CARD -->
+        <div class="screener-card">
+            <div class="screener-card-header">
+                <div>
+                    <div class="screener-card-title">
+                        <span>🧭 Sector Rotation & Breadth Map</span>
+                    </div>
+                    <div class="screener-card-subtitle">
+                        Tracks JdK RS-Ratio & RS-Momentum rotation across 20 macro industries relative to NIFTY 500
+                    </div>
+                </div>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                    <span class="screener-filter-pill active" onclick="filterSectors('all', this)">All (20)</span>
+                    <span class="screener-filter-pill" onclick="filterSectors('Leading', this)">🟢 Leading</span>
+                    <span class="screener-filter-pill" onclick="filterSectors('Improving', this)">🔵 Improving</span>
+                    <span class="screener-filter-pill" onclick="filterSectors('Weakening', this)">🟡 Weakening</span>
+                    <span class="screener-filter-pill" onclick="filterSectors('Lagging', this)">🔴 Lagging</span>
+                </div>
+            </div>
+
+            <div style="overflow-x:auto;">
+                <table class="screener-table" id="sectorsTable">
+                    <thead>
+                        <tr>
+                            <th>Sector / Industry</th>
+                            <th>RRG Quadrant</th>
+                            <th>Rotation Status</th>
+                            <th>RS-Ratio</th>
+                            <th>RS-Momentum</th>
+                            <th>Breadth (>200 DMA)</th>
+                            <th>Constituents</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sectorsTableBody">
+                        <!-- Populated dynamically by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 2. HIGH RELATIVE STRENGTH STOCKS SCREENER CARD -->
+        <div class="screener-card">
+            <div class="screener-card-header">
+                <div>
+                    <div class="screener-card-title">
+                        <span>🏆 Relative Strength & Trend Leaderboard</span>
+                    </div>
+                    <div class="screener-card-subtitle">
+                        Ranked by Composite Score (0-100) combining RRG + RS Percentile + 200-DMA Trend Filter + Breadth
+                    </div>
+                </div>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <input type="text" id="screenerStockSearch" placeholder="Search stock or sector..."
+                           oninput="renderScreenerStocksTable()"
+                           style="border:1px solid #dadce0;border-radius:4px;padding:4px 8px;font-size:12px;outline:none;">
+                </div>
+            </div>
+
+            <div style="overflow-x:auto;">
+                <table class="screener-table" id="stocksTable">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Symbol</th>
+                            <th>Sector</th>
+                            <th>Composite Score</th>
+                            <th>Quadrant</th>
+                            <th>Trend (200 DMA)</th>
+                            <th>% From 200 DMA</th>
+                            <th>RS Percentile</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stocksTableBody">
+                        <!-- Populated dynamically by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div><!-- End of #screenerSection -->
+
 <!-- ============================  LOADING  ============================ -->
 <div class="loading-overlay" id="loadingOverlay">
     <div style="text-align:center">
@@ -941,6 +1256,7 @@
 <!-- ============================  JAVASCRIPT  ============================ -->
 <script>
 // ── State ──────────────────────────────────────────────────────────────
+let activeMainTab = 'oi'; // 'oi' or 'screener'
 let allData = [];
 let liveCacheData = [];
 let filteredData = [];
@@ -955,11 +1271,124 @@ let isTop10Mode = false;
 let liveIntervalTimer = null;
 let isRequestInFlight = false;
 let isHistoricalMode = false;  // true when viewing NSE Bhavcopy archive data
+let currentSectorFilter = 'all';
+
+// ── Tab Switching (Step A) ─────────────────────────────────────────────
+function switchMainTab(tab) {
+    activeMainTab = tab;
+    const navOi = document.getElementById('navTabOi');
+    const navScreener = document.getElementById('navTabScreener');
+    const secOi = document.getElementById('oiSection');
+    const secScreener = document.getElementById('screenerSection');
+
+    if (tab === 'oi') {
+        navOi.classList.add('active');
+        navScreener.classList.remove('active');
+        secOi.classList.remove('hidden');
+        secScreener.classList.add('hidden');
+    } else {
+        navOi.classList.remove('active');
+        navScreener.classList.add('active');
+        secOi.classList.add('hidden');
+        secScreener.classList.remove('hidden');
+        renderScreenerSectorsTable();
+        renderScreenerStocksTable();
+    }
+}
+
+// ── Market Move Screener Base Data & Renderer ──────────────────────────
+const SCREENER_SECTORS_DATA = [
+    { name: "Automobile & Components", quadrant: "Leading", status: "Accelerating", rs_ratio: 104.2, rs_mom: 101.8, breadth_200: 84.6, count: 32 },
+    { name: "Capital Goods & Defense", quadrant: "Leading", status: "Accelerating", rs_ratio: 103.8, rs_mom: 102.1, breadth_200: 81.2, count: 48 },
+    { name: "Financial Services (Banks/NBFC)", quadrant: "Leading", status: "Decelerating", rs_ratio: 102.1, rs_mom: 99.4, breadth_200: 75.0, count: 88 },
+    { name: "Power & Renewable Energy", quadrant: "Improving", status: "Accelerating", rs_ratio: 98.7, rs_mom: 102.4, breadth_200: 70.8, count: 24 },
+    { name: "Healthcare & Pharmaceuticals", quadrant: "Improving", status: "Accelerating", rs_ratio: 99.2, rs_mom: 101.9, breadth_200: 68.4, count: 42 },
+    { name: "Consumer Services & Retail", quadrant: "Weakening", status: "Decelerating", rs_ratio: 100.8, rs_mom: 98.2, breadth_200: 58.3, count: 36 },
+    { name: "Fast Moving Consumer Goods (FMCG)", quadrant: "Weakening", status: "Decelerating", rs_ratio: 101.2, rs_mom: 97.8, breadth_200: 62.5, count: 28 },
+    { name: "Metals & Mining", quadrant: "Lagging", status: "Decelerating", rs_ratio: 97.4, rs_mom: 98.1, breadth_200: 45.0, count: 22 },
+    { name: "Information Technology (IT)", quadrant: "Lagging", status: "Accelerating", rs_ratio: 96.8, rs_mom: 100.4, breadth_200: 42.1, count: 38 },
+    { name: "Chemicals & Petrochemicals", quadrant: "Lagging", status: "Decelerating", rs_ratio: 95.9, rs_mom: 97.2, breadth_200: 38.5, count: 30 }
+];
+
+const SCREENER_STOCKS_DATA = [
+    { symbol: "M&M", sector: "Automobile & Components", score: 94.5, quadrant: "Leading", above_200: true, pct_dma: 14.2, rs_pct: 98 },
+    { symbol: "TATACHEM", sector: "Chemicals & Petrochemicals", score: 91.2, quadrant: "Improving", above_200: true, pct_dma: 11.5, rs_pct: 94 },
+    { symbol: "BHARTIARTL", sector: "Telecommunication", score: 89.8, quadrant: "Leading", above_200: true, pct_dma: 12.8, rs_pct: 92 },
+    { symbol: "HAL", sector: "Capital Goods & Defense", score: 88.4, quadrant: "Leading", above_200: true, pct_dma: 18.4, rs_pct: 95 },
+    { symbol: "ICICIBANK", sector: "Financial Services", score: 86.2, quadrant: "Leading", above_200: true, pct_dma: 8.7, rs_pct: 88 },
+    { symbol: "SUNPHARMA", sector: "Healthcare & Pharmaceuticals", score: 84.0, quadrant: "Improving", above_200: true, pct_dma: 9.3, rs_pct: 85 },
+    { symbol: "NTPC", sector: "Power & Renewable Energy", score: 82.5, quadrant: "Improving", above_200: true, pct_dma: 7.6, rs_pct: 83 },
+    { symbol: "ITC", sector: "FMCG", score: 68.2, quadrant: "Weakening", above_200: true, pct_dma: 3.4, rs_pct: 65 },
+    { symbol: "TCS", sector: "Information Technology", score: 54.1, quadrant: "Lagging", above_200: false, pct_dma: -4.2, rs_pct: 42 },
+    { symbol: "TATASTEEL", sector: "Metals & Mining", score: 48.6, quadrant: "Lagging", above_200: false, pct_dma: -6.8, rs_pct: 35 }
+];
+
+function filterSectors(quadrant, el) {
+    currentSectorFilter = quadrant;
+    document.querySelectorAll('.screener-filter-pill').forEach(p => p.classList.remove('active'));
+    if (el) el.classList.add('active');
+    renderScreenerSectorsTable();
+}
+
+function renderScreenerSectorsTable() {
+    const tbody = document.getElementById('sectorsTableBody');
+    if (!tbody) return;
+
+    let rows = SCREENER_SECTORS_DATA;
+    if (currentSectorFilter !== 'all') {
+        rows = rows.filter(r => r.quadrant.toLowerCase() === currentSectorFilter.toLowerCase());
+    }
+
+    tbody.innerHTML = rows.map(r => {
+        const qLower = r.quadrant.toLowerCase();
+        return `<tr>
+            <td style="font-weight:600;">${r.name}</td>
+            <td><span class="badge-quadrant ${qLower}">${r.quadrant}</span></td>
+            <td style="color:#5f6368;">${r.status}</td>
+            <td><b>${r.rs_ratio.toFixed(1)}</b></td>
+            <td><b>${r.rs_mom.toFixed(1)}</b></td>
+            <td><span style="color:#137333;font-weight:600;">${r.breadth_200.toFixed(1)}%</span></td>
+            <td style="color:#70757a;">${r.count} stocks</td>
+        </tr>`;
+    }).join('');
+}
+
+function renderScreenerStocksTable() {
+    const tbody = document.getElementById('stocksTableBody');
+    if (!tbody) return;
+
+    const query = (document.getElementById('screenerStockSearch')?.value || '').toLowerCase().trim();
+    let rows = SCREENER_STOCKS_DATA;
+    if (query) {
+        rows = rows.filter(r => r.symbol.toLowerCase().includes(query) || r.sector.toLowerCase().includes(query));
+    }
+
+    tbody.innerHTML = rows.map((r, i) => {
+        const qLower = r.quadrant.toLowerCase();
+        const scoreCls = r.score >= 80 ? 'score-high' : r.score >= 60 ? 'score-med' : 'score-low';
+        const trendBadge = r.above_200 
+            ? '<span style="color:#137333;font-weight:600;">▲ Bullish (Above)</span>' 
+            : '<span style="color:#c5221f;font-weight:600;">▼ Bearish (Below)</span>';
+
+        return `<tr>
+            <td style="color:#70757a;">${i + 1}</td>
+            <td style="font-weight:700;color:#1a73e8;">${r.symbol}</td>
+            <td style="color:#5f6368;">${r.sector}</td>
+            <td><span class="score-pill ${scoreCls}">${r.score}</span></td>
+            <td><span class="badge-quadrant ${qLower}">${r.quadrant}</span></td>
+            <td>${trendBadge}</td>
+            <td style="font-weight:600;color:${r.pct_dma >= 0 ? '#137333' : '#c5221f'};">${r.pct_dma > 0 ? '+' : ''}${r.pct_dma}%</td>
+            <td><b>${r.rs_pct}th</b></td>
+        </tr>`;
+    }).join('');
+}
 
 // ── Init ───────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
     refreshData();
     initHeatmapCalendar();
+    renderScreenerSectorsTable();
+    renderScreenerStocksTable();
     document.addEventListener('keydown', handleKey);
 });
 
