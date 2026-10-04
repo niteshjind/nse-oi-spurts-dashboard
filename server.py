@@ -386,7 +386,13 @@ screener_dir = os.path.join(BASE_DIR, "screener_module")
 if screener_dir not in sys.path:
     sys.path.insert(0, screener_dir)
 
-import screener_core as screener_engine
+try:
+    import screener_core as screener_engine
+    HAS_SCREENER_CORE = True
+except Exception as _e:
+    screener_engine = None
+    HAS_SCREENER_CORE = False
+    print(f"[Screener] Info: screener_core not loaded ({_e}), using bundled snapshot.")
 
 _screener_cache = {
     "sectors": [],
@@ -398,11 +404,32 @@ _screener_lock = threading.Lock()
 
 
 def _get_screener_data(timeframe="weekly", force_refresh=False):
-    """Compute and cache screener sectors & all stocks."""
+    """Compute and cache screener sectors & all stocks (with Vercel snapshot fallback)."""
     now = time.time()
     with _screener_lock:
         if not force_refresh and _screener_cache["stocks"] and (now - _screener_cache["updated_at"] < 3600):
             return _screener_cache
+
+        snapshot_path = os.path.join(BASE_DIR, "screener_module", "data", "screener_snapshot.json")
+        db_path = os.path.join(BASE_DIR, "screener_module", "data", "cache.db")
+
+        # Fallback to pre-computed institutional snapshot on Vercel / serverless if DB is absent
+        if not HAS_SCREENER_CORE or not os.path.exists(db_path):
+            if os.path.exists(snapshot_path):
+                print("[Screener] Loading bundled institutional snapshot...")
+                try:
+                    with open(snapshot_path, "r", encoding="utf-8") as f:
+                        snap_data = json.load(f)
+                        _screener_cache["sectors"] = snap_data.get("sectors", [])
+                        _screener_cache["stocks"] = snap_data.get("stocks", [])
+                        _screener_cache["timeframe"] = timeframe
+                        _screener_cache["updated_at"] = now
+                        return _screener_cache
+                except Exception as snap_err:
+                    print(f"[Screener] Snapshot load error: {snap_err}")
+
+        if not HAS_SCREENER_CORE:
+            raise RuntimeError("Screener core engine is not available and snapshot was not found.")
 
         print(f"[Screener] Computing real Market Move Screener ({timeframe})...")
         sectors_rows, _ = screener_engine.compute_sectors(timeframe=timeframe)
