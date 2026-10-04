@@ -387,6 +387,11 @@ if screener_dir not in sys.path:
     sys.path.insert(0, screener_dir)
 
 try:
+    from screener_snapshot_data import SNAPSHOT_DATA
+except Exception:
+    SNAPSHOT_DATA = None
+
+try:
     import screener_core as screener_engine
     HAS_SCREENER_CORE = True
 except Exception as _e:
@@ -415,8 +420,16 @@ def _get_screener_data(timeframe="weekly", force_refresh=False):
 
         # Fallback to pre-computed institutional snapshot on Vercel / serverless if DB is absent
         if not HAS_SCREENER_CORE or not os.path.exists(db_path):
+            if SNAPSHOT_DATA:
+                print("[Screener] Using bundled institutional snapshot from Python module...")
+                _screener_cache["sectors"] = SNAPSHOT_DATA.get("sectors", [])
+                _screener_cache["stocks"] = SNAPSHOT_DATA.get("stocks", [])
+                _screener_cache["timeframe"] = timeframe
+                _screener_cache["updated_at"] = now
+                return _screener_cache
+
             if os.path.exists(snapshot_path):
-                print("[Screener] Loading bundled institutional snapshot...")
+                print("[Screener] Loading bundled institutional snapshot from file...")
                 try:
                     with open(snapshot_path, "r", encoding="utf-8") as f:
                         snap_data = json.load(f)
