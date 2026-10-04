@@ -451,5 +451,8 @@ if __name__ == "__main__":
     worker_thread = threading.Thread(target=background_updater, daemon=True)
     worker_thread.start()
 
+    screener_prewarm_thread = threading.Thread(target=_get_screener_data, kwargs={"timeframe": "weekly"}, daemon=True)
+    screener_prewarm_thread.start()
+
     print("[Server] Dashboard ready at http://localhost:5000")
     app.run(debug=True, host="0.0.0.0", port=5000, threaded=True, use_reloader=False)
