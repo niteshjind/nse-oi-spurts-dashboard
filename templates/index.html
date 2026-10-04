@@ -2471,7 +2471,35 @@ const TRADING_CALENDAR_DATA = [
     {"date":"2026-09-17","weekday":"Thursday","month":"Sep 2026","availability":"AVAILABLE","symbols":210,"note":"210 F&O symbols"},
     {"date":"2026-09-18","weekday":"Friday","month":"Sep 2026","availability":"AVAILABLE","symbols":210,"note":"210 F&O symbols"},
     {"date":"2026-09-21","weekday":"Monday","month":"Sep 2026","availability":"AVAILABLE","symbols":210,"note":"210 F&O symbols"},
-    {"date":"2026-09-22","weekday":"Tuesday","month":"Sep 2026","availability":"AVAILABLE","symbols":210,"note":"210 F&O symbols"}
+    {"date":"2026-09-22","weekday":"Tuesday","month":"Sep 2026","availability":"AVAILABLE","symbols":210,"note":"210 F&O symbols"},
+    {"date":"2026-09-23","weekday":"Wednesday","month":"Sep 2026","availability":"AVAILABLE","symbols":210,"note":"210 F&O symbols"},
+    {"date":"2026-09-24","weekday":"Thursday","month":"Sep 2026","availability":"AVAILABLE","symbols":210,"note":"Monthly Expiry · 210 symbols"},
+    {"date":"2026-09-25","weekday":"Friday","month":"Sep 2026","availability":"AVAILABLE","symbols":210,"note":"210 F&O symbols"},
+    {"date":"2026-09-28","weekday":"Monday","month":"Sep 2026","availability":"AVAILABLE","symbols":210,"note":"210 F&O symbols"},
+    {"date":"2026-09-29","weekday":"Tuesday","month":"Sep 2026","availability":"AVAILABLE","symbols":210,"note":"210 F&O symbols"},
+    {"date":"2026-09-30","weekday":"Wednesday","month":"Sep 2026","availability":"AVAILABLE","symbols":213,"note":"213 F&O symbols"},
+    {"date":"2026-10-01","weekday":"Thursday","month":"Oct 2026","availability":"AVAILABLE","symbols":213,"note":"213 F&O symbols"},
+    {"date":"2026-10-02","weekday":"Friday","month":"Oct 2026","availability":"HOLIDAY","symbols":0,"note":"NSE Holiday (Mahatma Gandhi Jayanti)"},
+    {"date":"2026-10-05","weekday":"Monday","month":"Oct 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-10-06","weekday":"Tuesday","month":"Oct 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-10-07","weekday":"Wednesday","month":"Oct 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-10-08","weekday":"Thursday","month":"Oct 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-10-09","weekday":"Friday","month":"Oct 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-10-12","weekday":"Monday","month":"Oct 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-10-13","weekday":"Tuesday","month":"Oct 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-10-14","weekday":"Wednesday","month":"Oct 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-10-15","weekday":"Thursday","month":"Oct 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-10-16","weekday":"Friday","month":"Oct 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-10-19","weekday":"Monday","month":"Oct 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-10-20","weekday":"Tuesday","month":"Oct 2026","availability":"HOLIDAY","symbols":0,"note":"NSE Holiday (Dussehra)"},
+    {"date":"2026-10-21","weekday":"Wednesday","month":"Oct 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-10-22","weekday":"Thursday","month":"Oct 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-10-23","weekday":"Friday","month":"Oct 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-10-26","weekday":"Monday","month":"Oct 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-10-27","weekday":"Tuesday","month":"Oct 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-10-28","weekday":"Wednesday","month":"Oct 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-10-29","weekday":"Thursday","month":"Oct 2026","availability":"AVAILABLE","symbols":219,"note":"Monthly Expiry · 219 symbols"},
+    {"date":"2026-10-30","weekday":"Friday","month":"Oct 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"}
 ];
 
 let calendarMonthIndex = 0;
@@ -2483,13 +2511,15 @@ function initHeatmapCalendar() {
     TRADING_CALENDAR_DATA.forEach(d => monthsSet.add(d.month));
     calendarMonthsList = Array.from(monthsSet);
     
-    // Set to latest month by default (September 2026)
+    // Set to latest month by default (October 2026)
     calendarMonthIndex = calendarMonthsList.length - 1;
 
     renderMonthlyCalendar();
 
-    // Pre-select latest available date
-    const latestAvailable = TRADING_CALENDAR_DATA.filter(d => d.availability === 'AVAILABLE').pop();
+    // Pre-select latest available date up to today
+    const nowStr = new Date().toISOString().slice(0, 10);
+    const availablePast = TRADING_CALENDAR_DATA.filter(d => d.availability === 'AVAILABLE' && d.date <= nowStr);
+    const latestAvailable = availablePast.length ? availablePast[availablePast.length - 1] : TRADING_CALENDAR_DATA.filter(d => d.availability === 'AVAILABLE').pop();
     if (latestAvailable) {
         setCalendarSelection(latestAvailable.date, false);
     }
@@ -2555,6 +2585,8 @@ function renderMonthlyCalendar() {
     }
 
     const currentSelectedDate = document.getElementById('historicalDatePicker')?.value || '';
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
 
     // Render every day of the month 1..N
     for (let day = 1; day <= daysInMonth; day++) {
@@ -2582,9 +2614,17 @@ function renderMonthlyCalendar() {
                 onclick="selectHeatmapDate('${dateStr}', 'HOLIDAY')"
                 onmousemove="showHeatmapTip(event, '${dateStr}', '${dataEntry.weekday}', 'HOLIDAY', 0, '${dataEntry.note}')"
                 onmouseleave="hideHeatmapTip()">${day}</span>`;
+        } else if (dateObj <= today) {
+            // Past weekday without explicit entry
+            const weekdayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
+            const selCls = isSelected ? 'selected' : '';
+            cellsHtml += `<span class="cal-day-cell available ${selCls}" id="calcell-${dateStr}"
+                onclick="selectHeatmapDate('${dateStr}', 'AVAILABLE')"
+                onmousemove="showHeatmapTip(event, '${dateStr}', '${weekdayName}', 'AVAILABLE', 213, 'NSE F&O Archive Available')"
+                onmouseleave="hideHeatmapTip()">${day}</span>`;
         } else {
-            // Future or unrecorded weekday
-            cellsHtml += `<span class="cal-day-cell empty-pad" style="color:#bdc1c6;">${day}</span>`;
+            // Future weekday
+            cellsHtml += `<span class="cal-day-cell empty-pad" style="color:#bdc1c6;" title="Future Session">${day}</span>`;
         }
     }
 
