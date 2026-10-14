@@ -751,14 +751,7 @@
         .empty-state h3 { color: #3c4043; margin-bottom: 8px; }
         .empty-state p { max-width: 400px; line-height: 1.5; }
 
-        /* ================================================================
-           RESPONSIVE
-           ================================================================ */
-        @media (max-width: 768px) {
-            .toolbar { gap: 4px; }
-            .search-box input { width: 120px; }
-            .topbar-title { font-size: 14px; }
-        }
+        /* RESPONSIVE STYLES are unified at the bottom of the style section */
 
         /* Tooltip */
         [data-tooltip] { position: relative; }
@@ -993,6 +986,310 @@
             height: 9px;
             border-radius: 50%;
             display: inline-block;
+        }
+
+        /* ================================================================
+           MOBILE & TABLET RESPONSIVE SYSTEM
+           ================================================================ */
+        @media (max-width: 768px) {
+            *, button, a, select, input {
+                -webkit-tap-highlight-color: transparent;
+            }
+
+            /* Topbar mobile reflow & full-width segmented tab buttons */
+            .topbar {
+                padding: 8px 12px;
+                gap: 8px;
+                flex-wrap: wrap;
+            }
+            .topbar-icon {
+                width: 32px;
+                height: 32px;
+                font-size: 18px;
+            }
+            .topbar-title {
+                font-size: 14px;
+                line-height: 1.2;
+            }
+            .topbar-title small {
+                font-size: 10px;
+                margin-top: 1px;
+                opacity: 0.8;
+            }
+            #lastUpdated {
+                margin-left: auto !important;
+                font-size: 10px !important;
+                white-space: nowrap;
+            }
+            .app-nav-tabs {
+                width: 100%;
+                order: 4;
+                display: flex;
+                gap: 4px;
+                padding: 3px;
+                background: rgba(0, 0, 0, 0.22);
+            }
+            .app-nav-tab {
+                flex: 1;
+                justify-content: center;
+                padding: 8px 8px;
+                font-size: 11px;
+                font-weight: 700;
+            }
+
+            /* Action Toolbar: Smooth horizontal touch scroll ribbon */
+            .toolbar {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                padding: 6px 10px;
+                gap: 6px;
+                scrollbar-width: thin;
+            }
+            .toolbar::-webkit-scrollbar {
+                height: 3px;
+            }
+            .toolbar::-webkit-scrollbar-thumb {
+                background: #dadce0;
+                border-radius: 3px;
+            }
+            .toolbar-btn {
+                flex-shrink: 0;
+                padding: 5px 9px;
+                font-size: 12px;
+            }
+            .toolbar-sep {
+                flex-shrink: 0;
+                margin: 0 2px;
+            }
+            .auto-refresh {
+                flex-shrink: 0;
+            }
+            .toolbar .search-box {
+                margin-left: 0;
+                flex-shrink: 0;
+            }
+            .toolbar .search-box input {
+                width: 110px;
+                font-size: 12px;
+            }
+
+            /* Historical Memory Bar: Horizontal touch scroll */
+            .memory-bar {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                padding: 5px 10px;
+                gap: 6px;
+                scrollbar-width: thin;
+            }
+            .memory-tab {
+                flex-shrink: 0;
+                padding: 4px 8px;
+                font-size: 11px;
+            }
+            .calendar-picker-wrapper {
+                flex-shrink: 0;
+                margin-left: 4px;
+                padding-left: 6px;
+            }
+            .calendar-toggle-btn {
+                font-size: 11px;
+                padding: 2px 8px;
+                height: 26px;
+            }
+            .calendar-fetch-btn {
+                font-size: 11px;
+                padding: 2px 8px;
+                height: 26px;
+            }
+            .historical-badge {
+                flex-shrink: 0;
+                white-space: nowrap;
+            }
+
+            /* Calendar Popover: Centered modal on mobile viewport */
+            .heatmap-popover {
+                position: fixed !important;
+                top: 50% !important;
+                left: 50% !important;
+                transform: translate(-50%, -50%) !important;
+                width: calc(100vw - 24px) !important;
+                max-width: 320px !important;
+                box-shadow: 0 16px 48px rgba(0,0,0,0.3) !important;
+                z-index: 99999 !important;
+                padding: 12px 14px;
+            }
+            .cal-day-cell {
+                font-size: 11px;
+            }
+
+            /* F&O Sheet: Freeze/Sticky # and Symbol columns for mobile swipe */
+            .sheet-table {
+                font-size: 11px;
+            }
+            .sheet-table th {
+                padding: 6px 8px;
+                font-size: 10px;
+            }
+            .sheet-table td {
+                padding: 6px 8px;
+            }
+            .sheet-table th.row-num-header,
+            .sheet-table td.row-num {
+                width: 32px;
+                min-width: 32px;
+                position: sticky;
+                left: 0;
+                z-index: 15;
+                background: #f8f9fa;
+            }
+            .sheet-table th:nth-child(2),
+            .sheet-table td:nth-child(2) {
+                position: sticky;
+                left: 32px;
+                z-index: 15;
+                background: #ffffff;
+                box-shadow: 2px 0 4px rgba(0,0,0,0.06);
+            }
+            .sheet-table tbody tr:nth-child(even) td:nth-child(2) {
+                background: #fafbfc;
+            }
+            .sheet-table tbody tr:hover td:nth-child(2),
+            .sheet-table tbody tr.selected td:nth-child(2) {
+                background: #e8f0fe !important;
+            }
+
+            /* Status Bar: Horizontal scrollable strip */
+            .statusbar {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                flex-wrap: nowrap;
+                gap: 12px;
+                padding: 5px 10px;
+                font-size: 11px;
+            }
+            .statusbar .stat {
+                flex-shrink: 0;
+            }
+            .statusbar .countdown {
+                flex-shrink: 0;
+                margin-left: 0;
+            }
+
+            /* Screener Section: Mobile Responsive Grid & Cards */
+            .screener-container {
+                padding: 10px 10px 18px 10px;
+                gap: 10px;
+            }
+            .screener-metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+                margin-bottom: 10px;
+            }
+            .metric-tile {
+                padding: 8px 10px;
+            }
+            .metric-tile-lbl {
+                font-size: 10px;
+            }
+            .metric-tile-val {
+                font-size: 15px;
+            }
+            .screener-card {
+                padding: 12px;
+                border-radius: 8px;
+            }
+            .screener-card-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            .screener-card-title {
+                font-size: 13px;
+            }
+            .screener-card-subtitle {
+                font-size: 11px;
+            }
+            .screener-card-header > div:last-child {
+                width: 100%;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            .screener-chart-wrapper {
+                height: 290px;
+            }
+            .chart-legend-row {
+                gap: 8px;
+                font-size: 10px;
+                padding: 6px 8px;
+            }
+            .chart-tooltip-box {
+                max-width: 82vw;
+                font-size: 10px;
+                white-space: normal;
+            }
+            .screener-filter-pill {
+                padding: 3px 8px;
+                font-size: 10px;
+            }
+
+            /* Screener Tables: Sticky identifiers */
+            #sectorsTable th:nth-child(1),
+            #sectorsTable td:nth-child(1) {
+                position: sticky;
+                left: 0;
+                z-index: 5;
+                background: #ffffff;
+                box-shadow: 2px 0 4px rgba(0,0,0,0.06);
+            }
+            #sectorsTable th:nth-child(1) {
+                background: #f1f3f4;
+                z-index: 6;
+            }
+            #sectorsTable tbody tr:hover td:nth-child(1) {
+                background: #f8fafd;
+            }
+
+            #stocksTable th:nth-child(1),
+            #stocksTable td:nth-child(1) {
+                position: sticky;
+                left: 0;
+                z-index: 5;
+                background: #f1f3f4;
+                width: 28px;
+                min-width: 28px;
+            }
+            #stocksTable td:nth-child(1) {
+                background: #f8f9fa;
+            }
+            #stocksTable th:nth-child(2),
+            #stocksTable td:nth-child(2) {
+                position: sticky;
+                left: 28px;
+                z-index: 5;
+                background: #ffffff;
+                box-shadow: 2px 0 4px rgba(0,0,0,0.06);
+            }
+            #stocksTable tr:hover td:nth-child(2) {
+                background: #f8fafd;
+            }
+            #screenerStockSearch {
+                width: 100% !important;
+                margin-top: 4px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .topbar-title small {
+                display: none;
+            }
+            .screener-chart-wrapper {
+                height: 260px;
+            }
+            .metric-tile-val {
+                font-size: 14px;
+            }
         }
     </style>
 </head>
@@ -1505,18 +1802,28 @@ function initScreenerChartEvents() {
     });
 
     canvas.addEventListener('click', () => {
-        if (chartHoveredItem) {
-            if (chartHoveredItem.type === 'sector' && chartHoveredItem.sector) {
-                drilldownSector(chartHoveredItem.sector);
-            } else if (chartHoveredItem.type === 'stock' && chartHoveredItem.symbol) {
-                const searchInput = document.getElementById('screenerStockSearch');
-                if (searchInput) {
-                    searchInput.value = chartHoveredItem.symbol;
-                    renderScreenerStocksTable();
-                    document.getElementById('screenerStocksCard')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
-            }
-        }
+        triggerChartItemAction();
+    });
+
+    // Mobile touch interaction
+    canvas.addEventListener('touchstart', (e) => {
+        if (!e.touches || e.touches.length === 0) return;
+        const rect = canvas.getBoundingClientRect();
+        const mx = e.touches[0].clientX - rect.left;
+        const my = e.touches[0].clientY - rect.top;
+        handleChartMouseMove(mx, my);
+    }, { passive: true });
+
+    canvas.addEventListener('touchmove', (e) => {
+        if (!e.touches || e.touches.length === 0) return;
+        const rect = canvas.getBoundingClientRect();
+        const mx = e.touches[0].clientX - rect.left;
+        const my = e.touches[0].clientY - rect.top;
+        handleChartMouseMove(mx, my);
+    }, { passive: true });
+
+    canvas.addEventListener('touchend', () => {
+        triggerChartItemAction();
     });
 
     window.addEventListener('resize', () => {
@@ -1524,6 +1831,21 @@ function initScreenerChartEvents() {
             renderScreenerChart();
         }
     });
+}
+
+function triggerChartItemAction() {
+    if (chartHoveredItem) {
+        if (chartHoveredItem.type === 'sector' && chartHoveredItem.sector) {
+            drilldownSector(chartHoveredItem.sector);
+        } else if (chartHoveredItem.type === 'stock' && chartHoveredItem.symbol) {
+            const searchInput = document.getElementById('screenerStockSearch');
+            if (searchInput) {
+                searchInput.value = chartHoveredItem.symbol;
+                renderScreenerStocksTable();
+                document.getElementById('screenerStocksCard')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+    }
 }
 
 function handleChartMouseMove(mx, my) {
@@ -1571,7 +1893,7 @@ function handleChartMouseMove(mx, my) {
                 </div>
                 <div>RS-Ratio: <b>${found.rs_ratio ? Number(found.rs_ratio).toFixed(2) : '—'}</b> | RS-Mom: <b>${found.rs_momentum ? Number(found.rs_momentum).toFixed(2) : '—'}</b></div>
                 <div>Breadth >200 DMA: <b style="color:#81c995;">${b200}</b> | >50 DMA: <b style="color:#8ab4f8;">${b50}</b></div>
-                <div style="font-size:10px;color:#9aa0a6;margin-top:4px;">👉 Click to view ${found.count || ''} stocks</div>
+                <div style="font-size:10px;color:#9aa0a6;margin-top:4px;">👉 Tap / click to view ${found.count || ''} stocks</div>
             `;
         } else if (found.type === 'stock') {
             const pctDma = found.pct_from_dma !== undefined && found.pct_from_dma !== null ? Number(found.pct_from_dma).toFixed(1) + '%' : '—';
@@ -1585,13 +1907,18 @@ function handleChartMouseMove(mx, my) {
                 </div>
                 <div>RS-Ratio: <b>${found.rs_ratio ? Number(found.rs_ratio).toFixed(2) : '—'}</b> | RS-Mom: <b>${found.rs_momentum ? Number(found.rs_momentum).toFixed(2) : '—'}</b></div>
                 <div>200 DMA: <b>${found.above_200dma ? 'Bullish (Above)' : 'Bearish (Below)'}</b> (${pctDma})</div>
-                <div style="font-size:10px;color:#9aa0a6;margin-top:4px;">👉 Click to search in table</div>
+                <div style="font-size:10px;color:#9aa0a6;margin-top:4px;">👉 Tap / click to search in table</div>
             `;
         }
         tooltip.innerHTML = html;
         tooltip.style.display = 'block';
-        tooltip.style.left = `${mx}px`;
-        tooltip.style.top = `${my}px`;
+
+        // Responsive boundary clamping for tooltip
+        const parentRect = canvas.parentElement ? canvas.parentElement.getBoundingClientRect() : { width: 360 };
+        const clampedX = Math.max(75, Math.min(mx, parentRect.width - 75));
+        const clampedY = Math.max(30, my);
+        tooltip.style.left = `${clampedX}px`;
+        tooltip.style.top = `${clampedY}px`;
     } else {
         canvas.style.cursor = 'crosshair';
         tooltip.style.display = 'none';
@@ -2265,6 +2592,18 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchLiveScreenerData(false);
     initScreenerChartEvents();
     document.addEventListener('keydown', handleKey);
+
+    // Close calendar when clicking/tapping outside
+    document.addEventListener('click', (e) => {
+        const popover = document.getElementById('heatmapPopover');
+        const toggleBtn = document.getElementById('calendarToggleBtn');
+        if (popover && popover.classList.contains('active')) {
+            if (!popover.contains(e.target) && !toggleBtn.contains(e.target)) {
+                popover.classList.remove('active');
+                toggleBtn.classList.remove('open');
+            }
+        }
+    });
 });
 
 // ── Data fetching ──────────────────────────────────────────────────────
