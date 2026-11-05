@@ -415,6 +415,19 @@
             box-shadow: 0 2px 6px rgba(30,142,62,0.3);
             z-index: 2;
         }
+        .cal-day-cell.scheduled {
+            background: #f0f7ff;
+            color: #1a73e8;
+            border-color: #d2e3fc;
+        }
+        .cal-day-cell.scheduled:hover {
+            background: #e8f0fe;
+            color: #174ea6;
+            border-color: #1a73e8;
+            transform: scale(1.08);
+            box-shadow: 0 2px 6px rgba(26,115,232,0.25);
+            z-index: 2;
+        }
         .cal-day-cell.holiday {
             background: #f1f3f4;
             color: #80868b;
@@ -463,6 +476,7 @@
             border-radius: 50%;
         }
         .cal-legend-dot.avail { background: #1e8e3e; }
+        .cal-legend-dot.sched { background: #1a73e8; }
         .cal-legend-dot.hol { background: #9aa0a6; }
         .cal-legend-dot.wknd { background: #ea4335; }
         .heatmap-tooltip {
@@ -1413,7 +1427,7 @@
         <div class="heatmap-popover" id="heatmapPopover">
             <div class="calendar-nav-bar">
                 <button class="calendar-nav-btn" id="calPrevMonthBtn" onclick="changeCalendarMonth(-1)" title="Previous Month">◀</button>
-                <div class="calendar-month-title" id="calendarCurrentMonthTitle">September 2026</div>
+                <div class="calendar-month-title" id="calendarCurrentMonthTitle">November 2026</div>
                 <button class="calendar-nav-btn" id="calNextMonthBtn" onclick="changeCalendarMonth(1)" title="Next Month">▶</button>
             </div>
 
@@ -1436,6 +1450,7 @@
             <!-- Legend -->
             <div class="calendar-legend-bar">
                 <span class="cal-legend-item"><span class="cal-legend-dot avail"></span> Trading Day</span>
+                <span class="cal-legend-item"><span class="cal-legend-dot sched"></span> Scheduled</span>
                 <span class="cal-legend-item"><span class="cal-legend-dot hol"></span> Holiday</span>
                 <span class="cal-legend-item"><span class="cal-legend-dot wknd"></span> Closed</span>
             </div>
@@ -2838,7 +2853,51 @@ const TRADING_CALENDAR_DATA = [
     {"date":"2026-10-27","weekday":"Tuesday","month":"Oct 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
     {"date":"2026-10-28","weekday":"Wednesday","month":"Oct 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
     {"date":"2026-10-29","weekday":"Thursday","month":"Oct 2026","availability":"AVAILABLE","symbols":219,"note":"Monthly Expiry · 219 symbols"},
-    {"date":"2026-10-30","weekday":"Friday","month":"Oct 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"}
+    {"date":"2026-10-30","weekday":"Friday","month":"Oct 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-11-02","weekday":"Monday","month":"Nov 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-11-03","weekday":"Tuesday","month":"Nov 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-11-04","weekday":"Wednesday","month":"Nov 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-11-05","weekday":"Thursday","month":"Nov 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-11-06","weekday":"Friday","month":"Nov 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-11-09","weekday":"Monday","month":"Nov 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-11-10","weekday":"Tuesday","month":"Nov 2026","availability":"HOLIDAY","symbols":0,"note":"NSE Holiday (Diwali Balipratipada)"},
+    {"date":"2026-11-11","weekday":"Wednesday","month":"Nov 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-11-12","weekday":"Thursday","month":"Nov 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-11-13","weekday":"Friday","month":"Nov 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-11-16","weekday":"Monday","month":"Nov 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-11-17","weekday":"Tuesday","month":"Nov 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-11-18","weekday":"Wednesday","month":"Nov 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-11-19","weekday":"Thursday","month":"Nov 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-11-20","weekday":"Friday","month":"Nov 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-11-23","weekday":"Monday","month":"Nov 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-11-24","weekday":"Tuesday","month":"Nov 2026","availability":"HOLIDAY","symbols":0,"note":"NSE Holiday (Guru Nanak Jayanti)"},
+    {"date":"2026-11-25","weekday":"Wednesday","month":"Nov 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-11-26","weekday":"Thursday","month":"Nov 2026","availability":"AVAILABLE","symbols":219,"note":"Monthly Expiry · 219 symbols"},
+    {"date":"2026-11-27","weekday":"Friday","month":"Nov 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-11-30","weekday":"Monday","month":"Nov 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-12-01","weekday":"Tuesday","month":"Dec 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-12-02","weekday":"Wednesday","month":"Dec 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-12-03","weekday":"Thursday","month":"Dec 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-12-04","weekday":"Friday","month":"Dec 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-12-07","weekday":"Monday","month":"Dec 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-12-08","weekday":"Tuesday","month":"Dec 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-12-09","weekday":"Wednesday","month":"Dec 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-12-10","weekday":"Thursday","month":"Dec 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-12-11","weekday":"Friday","month":"Dec 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-12-14","weekday":"Monday","month":"Dec 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-12-15","weekday":"Tuesday","month":"Dec 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-12-16","weekday":"Wednesday","month":"Dec 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-12-17","weekday":"Thursday","month":"Dec 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-12-18","weekday":"Friday","month":"Dec 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-12-21","weekday":"Monday","month":"Dec 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-12-22","weekday":"Tuesday","month":"Dec 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-12-23","weekday":"Wednesday","month":"Dec 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-12-24","weekday":"Thursday","month":"Dec 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-12-25","weekday":"Friday","month":"Dec 2026","availability":"HOLIDAY","symbols":0,"note":"NSE Holiday (Christmas)"},
+    {"date":"2026-12-28","weekday":"Monday","month":"Dec 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-12-29","weekday":"Tuesday","month":"Dec 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-12-30","weekday":"Wednesday","month":"Dec 2026","availability":"AVAILABLE","symbols":219,"note":"219 F&O symbols"},
+    {"date":"2026-12-31","weekday":"Thursday","month":"Dec 2026","availability":"AVAILABLE","symbols":219,"note":"Monthly Expiry · 219 symbols"}
 ];
 
 let calendarMonthIndex = 0;
@@ -2850,8 +2909,10 @@ function initHeatmapCalendar() {
     TRADING_CALENDAR_DATA.forEach(d => monthsSet.add(d.month));
     calendarMonthsList = Array.from(monthsSet);
     
-    // Set to latest month by default (October 2026)
-    calendarMonthIndex = calendarMonthsList.length - 1;
+    // Set to current month if in list, otherwise latest month
+    const nowMonthStr = new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    const currentMonthIdx = calendarMonthsList.indexOf(nowMonthStr);
+    calendarMonthIndex = currentMonthIdx !== -1 ? currentMonthIdx : calendarMonthsList.length - 1;
 
     renderMonthlyCalendar();
 
@@ -2939,27 +3000,35 @@ function renderMonthlyCalendar() {
 
         const dataEntry = dataByDate[dateStr];
         const isSelected = (dateStr === currentSelectedDate);
+        const isFuture = (dateObj > today);
 
         if (isWeekend) {
             cellsHtml += `<span class="cal-day-cell weekend-day" title="${dateStr} (Weekend - Closed)">${day}</span>`;
-        } else if (dataEntry && dataEntry.availability === 'AVAILABLE') {
-            const selCls = isSelected ? 'selected' : '';
-            cellsHtml += `<span class="cal-day-cell available ${selCls}" id="calcell-${dateStr}"
-                onclick="selectHeatmapDate('${dateStr}', 'AVAILABLE')"
-                onmousemove="showHeatmapTip(event, '${dateStr}', '${dataEntry.weekday}', 'AVAILABLE', ${dataEntry.symbols}, '${dataEntry.note}')"
-                onmouseleave="hideHeatmapTip()">${day}</span>`;
         } else if (dataEntry && dataEntry.availability === 'HOLIDAY') {
             cellsHtml += `<span class="cal-day-cell holiday" id="calcell-${dateStr}"
                 onclick="selectHeatmapDate('${dateStr}', 'HOLIDAY')"
                 onmousemove="showHeatmapTip(event, '${dateStr}', '${dataEntry.weekday}', 'HOLIDAY', 0, '${dataEntry.note}')"
                 onmouseleave="hideHeatmapTip()">${day}</span>`;
-        } else if (dateObj <= today) {
+        } else if (dataEntry && dataEntry.availability === 'AVAILABLE') {
+            if (isFuture) {
+                cellsHtml += `<span class="cal-day-cell scheduled" id="calcell-${dateStr}"
+                    onclick="selectHeatmapDate('${dateStr}', 'SCHEDULED')"
+                    onmousemove="showHeatmapTip(event, '${dateStr}', '${dataEntry.weekday}', 'SCHEDULED', ${dataEntry.symbols}, '${dataEntry.note}')"
+                    onmouseleave="hideHeatmapTip()">${day}</span>`;
+            } else {
+                const selCls = isSelected ? 'selected' : '';
+                cellsHtml += `<span class="cal-day-cell available ${selCls}" id="calcell-${dateStr}"
+                    onclick="selectHeatmapDate('${dateStr}', 'AVAILABLE')"
+                    onmousemove="showHeatmapTip(event, '${dateStr}', '${dataEntry.weekday}', 'AVAILABLE', ${dataEntry.symbols}, '${dataEntry.note}')"
+                    onmouseleave="hideHeatmapTip()">${day}</span>`;
+            }
+        } else if (!isFuture) {
             // Past weekday without explicit entry
             const weekdayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
             const selCls = isSelected ? 'selected' : '';
             cellsHtml += `<span class="cal-day-cell available ${selCls}" id="calcell-${dateStr}"
                 onclick="selectHeatmapDate('${dateStr}', 'AVAILABLE')"
-                onmousemove="showHeatmapTip(event, '${dateStr}', '${weekdayName}', 'AVAILABLE', 213, 'NSE F&O Archive Available')"
+                onmousemove="showHeatmapTip(event, '${dateStr}', '${weekdayName}', 'AVAILABLE', 219, 'NSE F&O Archive Available')"
                 onmouseleave="hideHeatmapTip()">${day}</span>`;
         } else {
             // Future weekday
@@ -2985,6 +3054,12 @@ function selectHeatmapDate(dateStr, availability) {
         const item = TRADING_CALENDAR_DATA.find(d => d.date === dateStr);
         const reason = item ? item.note : 'Official NSE Holiday';
         showBanner('warn', `🏖️ ${dateStr} was an official NSE holiday (${reason}). No trading took place.`);
+        return;
+    }
+    if (availability === 'SCHEDULED') {
+        const item = TRADING_CALENDAR_DATA.find(d => d.date === dateStr);
+        const note = item ? ` (${item.note})` : '';
+        showBanner('warn', `📅 ${dateStr} is an upcoming trading session${note}. Official NSE Bhavcopy archive will be published after market close.`);
         return;
     }
     setCalendarSelection(dateStr, true);
@@ -3016,12 +3091,15 @@ function showHeatmapTip(e, date, day, avail, syms, note) {
     const tip = document.getElementById('heatmapTooltip');
     if (!tip) return;
     const isAvail = avail === 'AVAILABLE';
-    const icon = isAvail ? '🟢' : '🏖️';
+    const isSched = avail === 'SCHEDULED';
+    const icon = isAvail ? '🟢' : isSched ? '📅' : '🏖️';
     const dt = new Date(date);
     const formatted = dt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    const statusText = isAvail ? 'NSE Trading Day' : isSched ? 'Scheduled Trading Session' : 'NSE Holiday';
+    const statusColor = isAvail ? '#81c995' : isSched ? '#8ab4f8' : '#e8eaed';
 
     tip.innerHTML = `<div style="font-weight:700;margin-bottom:2px;">${icon} ${formatted} (${day.slice(0,3)})</div>` +
-        `<div style="color:${isAvail ? '#81c995' : '#e8eaed'};font-weight:600;">${isAvail ? 'NSE Trading Day' : 'NSE Holiday'}</div>` +
+        `<div style="color:${statusColor};font-weight:600;">${statusText}</div>` +
         (syms > 0 ? `<div style="color:#dadce0;font-size:10px;">${syms} F&O symbols</div>` : '') +
         `<div style="color:#bdc1c6;font-size:10px;margin-top:2px;">${note}</div>`;
 
